@@ -1,0 +1,70 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <meta name="theme-color" content="#0c2944">
+  <meta name="description"
+        content="Sistema de administración de Termales Santa Teresa">
+
+  <title>Iniciar sesión | Termales Santa Teresa</title>
+
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body class="fondo-login">
+
+  <main class="tarjeta">
+
+    <img
+      src="img/Emblema de Llamas Fluidas Azul y Verde.png"
+      alt="Logo de Termales Santa Teresa"
+      class="logo-login"
+    >
+
+    <h1>Termales Santa Teresa</h1>
+
+    <p class="sub">Sistema de administración</p>
+
+    <form id="formLogin">
+
+      <label for="usuario">Usuario</label>
+      <input
+        type="text"
+        id="usuario"
+        name="usuario"
+        placeholder="Ingresa tu usuario"
+        autocomplete="username"
+        required
+        autofocus
+      >
+
+      <label for="contrasena">Contraseña</label>
+      <input
+        type="password"
+        id="contrasena"
+        name="contrasena"
+        placeholder="Ingresa tu contraseña"
+        autocomplete="current-password"
+        required
+      >
+
+      <button type="submit">Ingresar</button>
+
+      <p
+        id="mensaje"
+        class="error"
+        role="status"
+        aria-live="polite"
+      ></p>
+
+    </form>
+
+  </main>
+
+  <script src="js/login.js"></script>
+
+</body>
+</html>

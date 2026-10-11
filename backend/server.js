@@ -18,6 +18,7 @@ app.get('/api/salud', async (req, res) => {
     res.status(500).json({ ok: false, error: error.message });
   }
 });
-
+app.use('/api/auth', require('./routes/auth'));
+app.use('/api/accesos', require('./routes/accesos'));
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Servidor en http://localhost:${PORT}`));

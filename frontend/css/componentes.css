@@ -1,0 +1,57 @@
+/* ==========================================
+   COMPONENTES REUTILIZABLES (BASE)
+   Se usan en todos los módulos. Mejóralos aquí
+   y cambian en todo el sistema.
+========================================== */
+
+/* Campo: etiqueta + control */
+.campo { display: flex; flex-direction: column; gap: 6px; }
+.campo label { font-size: 13px; font-weight: 600; color: #44596a; }
+
+/* Mensaje de éxito o error */
+.mensaje { min-height: 20px; font-size: 14px; color: var(--verde-oscuro, #12845f); }
+
+/* Tarjetas de resumen */
+.resumen {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+}
+
+.resumen-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px 18px;
+  background: #fff;
+  border: 1px solid #e0e9ed;
+  border-left: 4px solid var(--verde, #20ad80);
+  border-radius: 12px;
+}
+
+.resumen-item span { font-size: 13px; color: #637785; }
+
+.resumen-item strong { font-size: 26px; color: #163b55; }
+
+/* Tabla */
+.tabla-wrap {
+  overflow-x: auto;
+  background: #fff;
+  border: 1px solid #e0e9ed;
+  border-radius: 12px;
+}
+
+.tabla { width: 100%; border-collapse: collapse; font-size: 14px; }
+
+.tabla th {
+  text-align: left;
+  padding: 12px 14px;
+  background: #eef5f7;
+  color: #163b55;
+  font-weight: 700;
+  border-bottom: 1px solid #dce7eb;
+}
+
+.tabla td { padding: 11px 14px; border-bottom: 1px solid #eef3f5; }
+.tabla tbody tr:hover { background: #f7fbfb; }
+.tabla tbody tr:last-child td { border-bottom: none; }

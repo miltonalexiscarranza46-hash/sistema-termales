@@ -1,0 +1,48 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel | Sistema Termales</title>
+  <link rel="stylesheet" href="../css/styles.css">
+  <link rel="stylesheet" href="../css/componentes.css">
+  <link rel="stylesheet" href="../css/modulos/accesos.css">
+</head>
+
+<body>
+  <div class="layout" id="layout">
+
+    <aside class="menu" id="menuAdmin">
+      <img
+        src="../img/Emblema de Llamas Fluidas Azul y Verde.png"
+        alt="Termales Santa Teresa"
+        class="logo-menu"
+      >
+
+      <h2>Santa Teresa</h2>
+
+      <nav id="navegacion"></nav>
+
+      <button id="btnSalir" class="salir" type="button">
+        Cerrar sesión
+      </button>
+    </aside>
+
+    <main class="contenido">
+      <header>
+        <h1 id="titulo">Bienvenido</h1>
+        <span id="datosUsuario" class="chip"></span>
+      </header>
+
+      <section id="area">
+        <p>Selecciona un módulo del menú.</p>
+      </section>
+    </main>
+
+  </div>
+<script src="../js/api.js"></script>
+<script src="../js/modulos/accesos.js"></script>
+<script src="../js/dashboard.js"></script>
+</body>
+</html>

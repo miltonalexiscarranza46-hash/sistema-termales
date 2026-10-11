@@ -1,0 +1,34 @@
+/* ==========================================
+   MÓDULO: ACCESOS A PISCINAS (BASE)
+   Solo lo propio de este módulo. Reemplázalo
+   o mejóralo a tu gusto.
+========================================== */
+
+.accesos { display: flex; flex-direction: column; gap: 22px; }
+
+/* Formulario de registro */
+.accesos-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  align-items: end;
+  padding: 20px;
+  background: #fff;
+  border: 1px solid #e0e9ed;
+  border-radius: 14px;
+}
+
+/* Caja del total a cobrar */
+.total-previo {
+  padding: 10px 14px;
+  background: #eaf8f2;
+  border: 1px dashed var(--verde, #20ad80);
+  border-radius: 10px;
+}
+
+.total-previo span { font-size: 13px; color: #44596a; }
+.total-previo strong { font-size: 24px; color: var(--verde-oscuro, #12845f); }
+
+/* El mensaje ocupa todo el ancho */
+
+.accesos-form .mensaje { grid-column: 1 / -1; }
