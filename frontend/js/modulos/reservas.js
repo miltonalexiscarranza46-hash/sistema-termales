@@ -24,6 +24,11 @@ async function cargarReservas(area) {
         </div>
 
         <div class="campo">
+          <label for="resPersonas">Número de personas</label>
+          <input type="number" id="resPersonas" min="1" value="1" required>
+        </div>
+
+        <div class="campo">
           <label for="resCabana">Cabaña disponible</label>
           <select id="resCabana" required disabled></select>
         </div>
@@ -50,6 +55,7 @@ async function cargarReservas(area) {
               <th>Cliente</th>
               <th>Teléfono</th>
               <th>Cabaña</th>
+              <th>Personas</th>
               <th>Entrada</th>
               <th>Salida</th>
               <th>Total</th>
@@ -70,6 +76,7 @@ async function cargarReservas(area) {
   const telefono = area.querySelector('#resTelefono');
   const entrada = area.querySelector('#resEntrada');
   const salida = area.querySelector('#resSalida');
+  const personasEl = area.querySelector('#resPersonas');
   const select = area.querySelector('#resCabana');
   const anticipo = area.querySelector('#resAnticipo');
   const detalle = area.querySelector('#resDetalle');
@@ -97,14 +104,23 @@ async function cargarReservas(area) {
     return n > 0 ? n : 0;
   }
 
+  function personas() {
+    const p = Number(personasEl.value);
+    return Number.isInteger(p) && p > 0 ? p : 0;
+  }
+
   function actualizarTotal() {
     const c = cabanas.find((x) => x.id === Number(select.value));
     const n = noches();
-    const total = c && n > 0 ? c.precio_noche * n : 0;
+    const p = personas();
+    const total = c && n > 0 && p > 0 ? c.precio_persona * p * n : 0;
     const adelanto = Number(anticipo.value) || 0;
 
     detalle.textContent =
-      n > 0 ? 'Total · ' + n + (n === 1 ? ' noche' : ' noches') : 'Total de la reserva';
+      n > 0 && p > 0
+        ? 'Total · ' + n + (n === 1 ? ' noche' : ' noches') +
+          ' × ' + p + (p === 1 ? ' persona' : ' personas')
+        : 'Total de la reserva';
     totalEl.textContent = dinero(total);
     saldoEl.textContent = 'Saldo: ' + dinero(Math.max(total - adelanto, 0));
   }
@@ -131,9 +147,16 @@ async function cargarReservas(area) {
       actualizarTotal();
       return;
     }
+    if (personas() < 1) {
+      textoSelect('Indica cuántas personas serán');
+      actualizarTotal();
+      return;
+    }
 
     const d = await api(
-      '/reservas/disponibles?entrada=' + entrada.value + '&salida=' + salida.value
+      '/reservas/disponibles?entrada=' + entrada.value +
+      '&salida=' + salida.value +
+      '&personas=' + personas()
     );
     if (!d.ok) {
       textoSelect('Error al consultar');
@@ -141,10 +164,10 @@ async function cargarReservas(area) {
       return;
     }
 
-    cabanas = d.cabanas.map((c) => ({ ...c, precio_noche: Number(c.precio_noche) }));
+    cabanas = d.cabanas.map((c) => ({ ...c, precio_persona: Number(c.precio_persona) }));
 
     if (cabanas.length === 0) {
-      textoSelect('No hay cabañas libres en esas fechas');
+      textoSelect('No hay cabañas libres para esas fechas y esa cantidad de personas');
       actualizarTotal();
       return;
     }
@@ -154,7 +177,8 @@ async function cargarReservas(area) {
       const op = document.createElement('option');
       op.value = c.id;
       op.textContent =
-        c.nombre + ' · ' + c.capacidad + ' personas · ' + dinero(c.precio_noche) + '/noche';
+        c.nombre + ' · hasta ' + c.capacidad + ' personas · ' +
+        dinero(c.precio_persona) + ' por persona/noche';
       select.appendChild(op);
     });
     select.disabled = false;
@@ -173,7 +197,7 @@ async function cargarReservas(area) {
     if (d.reservas.length === 0) {
       const tr = document.createElement('tr');
       const td = document.createElement('td');
-      td.colSpan = 10;
+      td.colSpan = 11;
       td.textContent = 'No hay reservas próximas.';
       tr.appendChild(td);
       tbody.appendChild(tr);
@@ -188,6 +212,7 @@ async function cargarReservas(area) {
         r.cliente,
         r.telefono || '—',
         r.cabana,
+        r.personas,
         r.fecha_entrada,
         r.fecha_salida,
         dinero(r.total),
@@ -245,6 +270,8 @@ async function cargarReservas(area) {
     buscarDisponibles();
   });
   salida.addEventListener('change', buscarDisponibles);
+  personasEl.addEventListener('change', buscarDisponibles);
+  personasEl.addEventListener('input', actualizarTotal);
   select.addEventListener('change', actualizarTotal);
   anticipo.addEventListener('input', actualizarTotal);
 
@@ -258,6 +285,7 @@ async function cargarReservas(area) {
         nombre: nombre.value,
         telefono: telefono.value,
         cabana_id: Number(select.value),
+        personas: personas(),
         fecha_entrada: entrada.value,
         fecha_salida: salida.value,
         anticipo: Number(anticipo.value) || 0,
@@ -272,6 +300,7 @@ async function cargarReservas(area) {
     const r = d.reserva;
     mensaje.textContent =
       'Reserva creada: ' + r.noches + (r.noches === 1 ? ' noche' : ' noches') +
+      ', ' + r.personas + (r.personas === 1 ? ' persona' : ' personas') +
       ', total ' + dinero(r.total) + ', estado ' + r.estado + '.';
 
     form.reset();

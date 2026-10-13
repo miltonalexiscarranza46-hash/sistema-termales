@@ -1,34 +1,421 @@
 /* ==========================================
-   MÓDULO: ACCESOS A PISCINAS (BASE)
-   Solo lo propio de este módulo. Reemplázalo
-   o mejóralo a tu gusto.
+   TERMAL​ES SANTA TERESA
+   MÓDULO: ACCESOS A PISCINAS
+   Dashboard premium · Azul nocturno · Turquesa
 ========================================== */
 
-.accesos { display: flex; flex-direction: column; gap: 22px; }
+/* ---------- PALETA DEL MÓDULO ---------- */
+.accesos {
+  --ac-bg: #0b1426;
+  --ac-panel: #111f36;
+  --ac-panel-hover: #172943;
+  --ac-border: rgba(148, 185, 220, 0.16);
+  --ac-text: #e8f2ff;
+  --ac-muted: #93a8c2;
+  --ac-green: #21d6a0;
+  --ac-blue: #398cff;
+  --ac-radius: 16px;
 
-/* Formulario de registro */
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  color: var(--ac-text);
+  animation: accesos-entrada 0.55s ease both;
+}
+
+/* ---------- FORMULARIO ---------- */
 .accesos-form {
+  position: relative;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   align-items: end;
-  padding: 20px;
-  background: #fff;
-  border: 1px solid #e0e9ed;
-  border-radius: 14px;
+  gap: 22px 18px;
+
+  padding: 26px;
+  overflow: hidden;
+
+  background:
+    radial-gradient(
+      ellipse at top right,
+      rgba(43, 116, 190, 0.13),
+      transparent 55%
+    ),
+    linear-gradient(145deg, #14253e, #0e192c);
+
+  border: 1px solid var(--ac-border);
+  border-radius: var(--ac-radius);
+
+  box-shadow:
+    0 16px 40px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.035);
+
+  transition:
+    border-color 0.3s ease,
+    box-shadow 0.3s ease,
+    transform 0.3s ease;
 }
 
-/* Caja del total a cobrar */
-.total-previo {
-  padding: 10px 14px;
-  background: #eaf8f2;
-  border: 1px dashed var(--verde, #20ad80);
+.accesos-form:hover {
+  border-color: rgba(55, 160, 255, 0.3);
+  box-shadow:
+    0 20px 45px rgba(0, 0, 0, 0.22),
+    0 0 25px rgba(38, 132, 255, 0.045);
+}
+
+/* Línea luminosa superior */
+.accesos-form::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 7%;
+  width: 38%;
+  height: 2px;
+
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--ac-green),
+    var(--ac-blue),
+    transparent
+  );
+
+  opacity: 0.8;
+  pointer-events: none;
+}
+
+/* ---------- CAMPOS Y ETIQUETAS ---------- */
+.accesos-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  min-width: 0;
+
+  color: var(--ac-muted);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.025em;
+}
+
+.accesos-form input,
+.accesos-form select,
+.accesos-form textarea {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+
+  padding: 12px 14px;
+  color: var(--ac-text);
+  font: inherit;
+  font-size: 14px;
+
+  background: rgba(5, 14, 29, 0.68);
+  border: 1px solid rgba(144, 177, 211, 0.2);
   border-radius: 10px;
+  outline: none;
+
+  transition:
+    border-color 0.22s ease,
+    background 0.22s ease,
+    box-shadow 0.22s ease,
+    transform 0.22s ease;
 }
 
-.total-previo span { font-size: 13px; color: #44596a; }
-.total-previo strong { font-size: 24px; color: var(--verde-oscuro, #12845f); }
+.accesos-form input::placeholder,
+.accesos-form textarea::placeholder {
+  color: #7186a2;
+}
 
-/* El mensaje ocupa todo el ancho */
+.accesos-form input:hover,
+.accesos-form select:hover,
+.accesos-form textarea:hover {
+  border-color: rgba(69, 153, 255, 0.48);
+  background-color: rgba(9, 23, 43, 0.9);
+}
 
-.accesos-form .mensaje { grid-column: 1 / -1; }
+.accesos-form input:focus,
+.accesos-form select:focus,
+.accesos-form textarea:focus {
+  border-color: var(--ac-blue);
+  background-color: #0c1b30;
+  box-shadow: 0 0 0 3px rgba(57, 140, 255, 0.14);
+}
+
+.accesos-form input:focus-visible,
+.accesos-form select:focus-visible,
+.accesos-form textarea:focus-visible {
+  outline: 2px solid rgba(33, 214, 160, 0.55);
+  outline-offset: 2px;
+}
+
+/* Mantener legible el selector de fecha */
+.accesos-form input[type="date"] {
+  color-scheme: dark;
+}
+
+/* ---------- TOTAL A COBRAR ---------- */
+.total-previo {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+
+  padding: 17px 18px;
+  overflow: hidden;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(33, 214, 160, 0.12),
+      rgba(20, 42, 65, 0.72)
+    );
+
+  border: 1px solid rgba(33, 214, 160, 0.34);
+  border-radius: 13px;
+
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035);
+
+  transition:
+    border-color 0.25s ease,
+    transform 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.total-previo:hover {
+  transform: translateY(-2px);
+  border-color: rgba(33, 214, 160, 0.65);
+  box-shadow: 0 8px 24px rgba(33, 214, 160, 0.07);
+}
+
+.total-previo span {
+  color: var(--ac-muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.total-previo strong {
+  color: var(--ac-green);
+  font-size: clamp(23px, 2vw, 30px);
+  font-weight: 750;
+  line-height: 1.2;
+  letter-spacing: -0.035em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- BOTONES DEL MÓDULO ---------- */
+.accesos button,
+.accesos-form button {
+  position: relative;
+  overflow: hidden;
+
+  min-height: 44px;
+  padding: 12px 18px;
+
+  color: #041b1a;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+
+  background: linear-gradient(135deg, #35e0ae, #17b98d);
+  border: 1px solid rgba(87, 255, 203, 0.3);
+  border-radius: 10px;
+
+  box-shadow: 0 5px 16px rgba(20, 185, 141, 0.12);
+  cursor: pointer;
+
+  transition:
+    transform 0.2s ease,
+    filter 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.accesos button:hover,
+.accesos-form button:hover {
+  filter: brightness(1.08);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 22px rgba(20, 185, 141, 0.22);
+}
+
+.accesos button:active,
+.accesos-form button:active {
+  transform: translateY(0) scale(0.985);
+}
+
+.accesos button:focus-visible,
+.accesos-form button:focus-visible {
+  outline: 2px solid var(--ac-green);
+  outline-offset: 3px;
+}
+
+.accesos button:disabled,
+.accesos-form button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* ---------- MENSAJES ---------- */
+.accesos-form .mensaje {
+  grid-column: 1 / -1;
+  padding: 12px 15px;
+
+  color: var(--ac-text);
+  background: rgba(57, 140, 255, 0.08);
+  border: 1px solid rgba(57, 140, 255, 0.2);
+  border-radius: 10px;
+
+  animation: accesos-mensaje 0.3s ease both;
+}
+
+/* ---------- PANELES Y TABLAS ---------- */
+.accesos table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+
+  color: var(--ac-text);
+  background: linear-gradient(145deg, #111f36, #0d192b);
+  border: 1px solid var(--ac-border);
+  border-radius: var(--ac-radius);
+  overflow: hidden;
+}
+
+.accesos thead th {
+  padding: 15px 17px;
+
+  color: #a9bfd9;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.075em;
+  text-align: left;
+  text-transform: uppercase;
+
+  background: rgba(67, 112, 162, 0.11);
+  border-bottom: 1px solid var(--ac-border);
+}
+
+.accesos tbody td {
+  padding: 15px 17px;
+  color: #d3e0f0;
+  font-size: 13px;
+
+  border-bottom: 1px solid rgba(148, 185, 220, 0.09);
+
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.accesos tbody tr {
+  transition: background-color 0.2s ease;
+}
+
+.accesos tbody tr:hover td {
+  color: #ffffff;
+  background: rgba(57, 140, 255, 0.075);
+}
+
+.accesos tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* ---------- TARJETAS INTERNAS ---------- */
+.accesos .panel,
+.accesos .card {
+  background: linear-gradient(145deg, #14243b, #0e1b2e);
+  border: 1px solid var(--ac-border);
+  border-radius: 14px;
+
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.12);
+
+  transition:
+    transform 0.25s ease,
+    border-color 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.accesos .panel:hover,
+.accesos .card:hover {
+  border-color: rgba(57, 140, 255, 0.28);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.18);
+}
+
+/* ---------- ANIMACIONES ---------- */
+@keyframes accesos-entrada {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes accesos-mensaje {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ---------- ADAPTACIÓN RESPONSIVE ---------- */
+@media (max-width: 1050px) {
+  .accesos-form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding: 21px;
+    gap: 18px;
+  }
+}
+
+@media (max-width: 600px) {
+  .accesos {
+    gap: 16px;
+  }
+
+  .accesos-form {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+    padding: 17px;
+    border-radius: 13px;
+  }
+
+  .accesos-form .mensaje {
+    grid-column: auto;
+  }
+
+  .total-previo {
+    padding: 15px;
+  }
+
+  .accesos table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  .accesos thead th,
+  .accesos tbody td {
+    padding: 12px;
+  }
+}
+
+/* ---------- ACCESIBILIDAD ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .accesos,
+  .accesos *,
+  .accesos *::before,
+  .accesos *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}

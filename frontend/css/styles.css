@@ -890,10 +890,10 @@ body:not(.fondo-login) {
 
 /* Menú lateral oculto parcialmente */
 .layout .menu {
-  position: fixed !important;
-  top: 0;
-  left: 0;
-  bottom: 0;
+      top: 0;
+    left: auto;
+    right: 0;
+    bottom: 0;
 
   display: flex;
   flex-direction: column;
@@ -909,9 +909,9 @@ body:not(.fondo-login) {
 
   z-index: 1001;
 
-  transform: translateX(
-    calc(-1 * (var(--menu-ancho) - var(--menu-franja)))
-  );
+ transform: translateX(
+    calc(var(--menu-ancho) - var(--menu-franja))
+);
 
   transition: transform var(--menu-duracion)
     cubic-bezier(0.22, 1, 0.36, 1);
@@ -933,8 +933,8 @@ body:not(.fondo-login) {
   min-width: 0;
   max-width: 100%;
 
-  margin-left: var(--menu-franja);
-  padding: clamp(20px, 3vw, 36px);
+  margin-left: 0;
+margin-right: var(--menu-franja);
 
   transition:
     margin-left var(--menu-duracion)
@@ -947,7 +947,7 @@ body:not(.fondo-login) {
 .layout:has(.menu:hover) .contenido,
 .layout:has(.menu:focus-within) .contenido,
 .layout.menu-abierto .contenido {
-  margin-left: var(--menu-ancho);
+    margin-right: var(--menu-ancho);
 }
 
 /* El encabezado puede reorganizarse */
@@ -1057,4 +1057,48 @@ body:not(.fondo-login) {
 .menu-toggle,
 .hamburger-btn {
     display: none !important;
+}
+
+
+/* ==========================================
+   FONDO PRINCIPAL DE LA APLICACIÓN
+========================================== */
+
+/* Fondo de toda la ventana */
+html,
+body {
+    min-height: 100%;
+    background: #081321 !important;
+}
+
+/* Estructura general */
+.layout {
+    min-height: 100vh;
+    background:
+        radial-gradient(
+            ellipse at 75% 0%,
+            rgba(20, 92, 165, 0.20),
+            transparent 48%
+        ),
+        linear-gradient(
+            135deg,
+            #081321 0%,
+            #0c192b 55%,
+            #101f34 100%
+        ) !important;
+}
+
+/* Área donde aparecen los módulos y formularios */
+.layout .contenido {
+    min-height: 100vh;
+    background: transparent !important;
+    color: #e6effb;
+}
+
+/* Evitar que contenedores comunes mantengan el fondo blanco */
+.layout .contenido > section,
+.layout .contenido > main,
+.layout .contenido > .container,
+.layout .contenido > .contenedor {
+    background: transparent !important;
 }
