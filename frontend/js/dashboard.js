@@ -9,7 +9,7 @@ if (!token || !usuario) {
 // Módulos y qué roles los ven
 const modulos = [
   { nombre: 'Accesos a piscinas', roles: ['administrador', 'cajero'], cargar: cargarAccesos },
-  { nombre: 'Reservas de cabañas', roles: ['administrador', 'cajero'] },
+   { nombre: 'Reservas de cabañas', roles: ['administrador', 'cajero'], cargar: cargarReservas },
   { nombre: 'Restaurante y bar', roles: ['administrador', 'cajero', 'mesero'] },
   { nombre: 'Inventario', roles: ['administrador', 'cajero', 'mesero'] },
   { nombre: 'Gastos', roles: ['administrador'] },

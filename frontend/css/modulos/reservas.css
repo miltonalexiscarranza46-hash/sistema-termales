@@ -1,0 +1,50 @@
+/* ==========================================
+   MÓDULO: RESERVAS DE CABAÑAS (BASE)
+========================================== */
+
+.reservas { display: flex; flex-direction: column; gap: 22px; }
+
+/* Reservas canceladas en gris */
+.fila-cancelada td { color: #9aa9b4; }
+
+/* Etiquetas de estado */
+.estado {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+.estado-pendiente { background: #fff4d6; color: #8a5a00; }
+.estado-pagada    { background: #dff6ec; color: #147c5a; }
+.estado-cancelada { background: #fde7e5; color: #a3342b; }
+
+/* Botón cancelar (sobrescribe el verde de #area button) */
+#area .btn-cancelar {
+  color: #a3342b;
+  background: #fff;
+  border: 1px solid #f0c3bf;
+  padding: 6px 12px;
+}
+#area .btn-cancelar:hover {
+  background: #fde7e5;
+  transform: none;
+}
+
+/* Formulario de nueva reserva */
+.reservas-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 16px;
+  align-items: end;
+  padding: 20px;
+  background: #fff;
+  border: 1px solid #e0e9ed;
+  border-radius: 14px;
+}
+
+.reservas-form .mensaje { grid-column: 1 / -1; }
+
+/* Detalle pequeño dentro de la caja del total */
+.total-previo small { color: #44596a; font-size: 12px; }
