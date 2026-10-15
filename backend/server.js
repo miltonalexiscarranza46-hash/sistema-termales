@@ -23,5 +23,6 @@ app.use('/api/accesos', require('./routes/accesos'));
 app.use('/api/reservas', require('./routes/reservas'));
 app.use('/api/masajes', require('./routes/masajes'));
 app.use('/api/resumen', require('./routes/resumen'));
+app.use('/api/gastos', require('./routes/gastos'));
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Servidor en http://localhost:${PORT}`));

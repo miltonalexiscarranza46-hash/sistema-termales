@@ -1,0 +1,34 @@
+/* ==========================================
+   MÓDULO: GASTOS (ADMINISTRADOR)
+========================================== */
+
+.gastos { display: flex; flex-direction: column; gap: 22px; }
+
+/* Formulario de registro */
+.gastos-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  align-items: end;
+  padding: 20px;
+  background: #fff;
+  border: 1px solid #e0e9ed;
+  border-radius: 14px;
+}
+
+.gastos-form .mensaje { grid-column: 1 / -1; }
+
+/* Tarjetas de resumen en naranja (gastos) */
+.gastos .resumen-gasto { border-left-color: #d9822b; }
+
+/* Botón borrar */
+#area .gastos .btn-borrar {
+  padding: 6px 12px;
+  color: #a3342b;
+  background: #fff;
+  border: 1px solid #f0c3bf;
+}
+#area .gastos .btn-borrar:hover {
+  background: #fde7e5;
+  transform: none;
+}
