@@ -16,7 +16,7 @@ const modulos = [
   { nombre: 'Caja', roles: ['cajero'] },
   { nombre: 'Enviar reporte', roles: ['recepcionista', 'masajista', 'mesero', 'bodega', 'cajero'] },
   { nombre: 'Resumen del día', roles: ['administrador'], cargar: cargarResumen },
-  { nombre: 'Gastos', roles: ['administrador'] },
+  { nombre: 'Gastos', roles: ['administrador'], cargar: cargarGastos },
   { nombre: 'Reportes recibidos', roles: ['administrador'] },
   { nombre: 'Usuarios', roles: ['administrador'] },
 ];
