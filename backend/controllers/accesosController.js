@@ -41,9 +41,10 @@ exports.registrar = async (req, res) => {
 
 exports.hoy = async (req, res) => {
   try {
-    const soloMios = req.usuario.rol === 'cajero';
-    const filtro = soloMios ? 'AND a.usuario_id = $1' : '';
-    const params = soloMios ? [req.usuario.id] : [];
+        // Cada recepcionista ve solo lo que él cobró.
+    // El administrador verá el resumen en su propio panel (Paso E).
+    const filtro = 'AND a.usuario_id = $1';
+    const params = [req.usuario.id];
 
     const r = await pool.query(
       `SELECT a.id, t.nombre AS tipo, a.cantidad, a.monto,

@@ -8,13 +8,15 @@ if (!token || !usuario) {
 
 // Módulos y qué roles los ven
 const modulos = [
-  { nombre: 'Accesos a piscinas', roles: ['administrador', 'cajero'], cargar: cargarAccesos },
-   { nombre: 'Reservas de cabañas', roles: ['administrador', 'cajero'], cargar: cargarReservas },
-  { nombre: 'Restaurante y bar', roles: ['administrador', 'cajero', 'mesero'] },
-  { nombre: 'Inventario', roles: ['administrador', 'cajero', 'mesero'] },
+  { nombre: 'Accesos a piscinas', roles: ['recepcionista'], cargar: cargarAccesos },
+  { nombre: 'Reservas de cabañas', roles: ['recepcionista'], cargar: cargarReservas },
+  { nombre: 'Masajes', roles: ['masajista'], cargar: cargarMasajes },
+  { nombre: 'Restaurante y bar', roles: ['mesero'] },
+  { nombre: 'Inventario', roles: ['bodega', 'mesero'] },
+  { nombre: 'Caja', roles: ['cajero'] },
+  { nombre: 'Enviar reporte', roles: ['recepcionista', 'masajista', 'mesero', 'bodega', 'cajero'] },
+  { nombre: 'Resumen del día', roles: ['administrador'], cargar: cargarResumen },
   { nombre: 'Gastos', roles: ['administrador'] },
-  { nombre: 'Caja', roles: ['administrador', 'cajero'] },
-  { nombre: 'Enviar reporte', roles: ['cajero', 'mesero'] },
   { nombre: 'Reportes recibidos', roles: ['administrador'] },
   { nombre: 'Usuarios', roles: ['administrador'] },
 ];

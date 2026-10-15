@@ -1,0 +1,23 @@
+/* ==========================================
+   MÓDULO: RESUMEN DEL DÍA (ADMINISTRADOR)
+========================================== */
+
+.resumen-dia { display: flex; flex-direction: column; gap: 22px; }
+
+.resumen-filtro { max-width: 220px; }
+
+.resumen-dia .subtitulo {
+  font-size: 17px;
+  font-weight: 700;
+  color: #163b55;
+}
+
+/* Tarjeta de gastos en naranja */
+.resumen-dia .resumen-gasto { border-left-color: #d9822b; }
+
+/* Balance: verde si es positivo, rojo si es negativo */
+.resumen-dia #tarjetaBalance strong { color: var(--verde-oscuro, #12845f); }
+.resumen-dia #tarjetaBalance.balance-negativo { border-left-color: #c0392b; }
+.resumen-dia #tarjetaBalance.balance-negativo strong { color: #a3342b; }
+
+.resumen-dia .nota { font-size: 13px; color: #637785; line-height: 1.5; }

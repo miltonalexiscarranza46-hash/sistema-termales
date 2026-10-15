@@ -1,0 +1,67 @@
+/* ==========================================
+   MÓDULO: MASAJES (BASE)
+========================================== */
+
+.masajes { display: flex; flex-direction: column; gap: 22px; }
+
+/* Formulario de agendar */
+.masajes-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  align-items: end;
+  padding: 20px;
+  background: #fff;
+  border: 1px solid #e0e9ed;
+  border-radius: 14px;
+}
+
+.masajes-form .mensaje { grid-column: 1 / -1; }
+
+.masajes-form .total-previo {
+  padding: 10px 14px;
+  background: #eaf8f2;
+  border: 1px dashed var(--verde, #20ad80);
+  border-radius: 10px;
+}
+.masajes-form .total-previo span { font-size: 13px; color: #44596a; }
+.masajes-form .total-previo strong { font-size: 24px; color: var(--verde-oscuro, #12845f); }
+
+/* Botón deshabilitado cuando nadie está libre */
+#area .masajes-form button:disabled {
+  background: #b9c7cf;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Citas canceladas en gris */
+.masajes .fila-cancelada td { color: #9aa9b4; }
+
+/* Etiquetas de estado */
+.masajes .estado {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+.masajes .estado-agendada  { background: #fff4d6; color: #8a5a00; }
+.masajes .estado-cobrada   { background: #dff6ec; color: #147c5a; }
+.masajes .estado-cancelada { background: #fde7e5; color: #a3342b; }
+
+/* Botones de cada cita */
+.masajes .acciones { display: flex; gap: 8px; flex-wrap: wrap; }
+
+#area .masajes .btn-cobrar { padding: 6px 12px; }
+
+#area .masajes .btn-cancelar {
+  padding: 6px 12px;
+  color: #a3342b;
+  background: #fff;
+  border: 1px solid #f0c3bf;
+}
+#area .masajes .btn-cancelar:hover {
+  background: #fde7e5;
+  transform: none;
+}
