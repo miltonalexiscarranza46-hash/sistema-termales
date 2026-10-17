@@ -91,7 +91,7 @@ git pull
 git checkout -b nombre-de-tu-rama
 ```
 2. Cada módulo se construye con el mismo patrón:
-   - `backend/controllers/x Controller.js` (la lógica)
+      - `backend/controllers/xController.js` (la lógica)
    - `backend/routes/x.js` (usa `verificarToken` y `permitirRoles`)
    - una línea en `backend/server.js`
    - `frontend/js/modulos/x.js` y `frontend/css/modulos/x.css`
