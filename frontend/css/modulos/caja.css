@@ -1,0 +1,73 @@
+/* ==========================================
+   MÓDULO: CAJA (CAJERO)
+========================================== */
+
+.caja { display: flex; flex-direction: column; gap: 22px; }
+
+/* El atributo hidden debe ganar a los display de abajo */
+.caja [hidden] { display: none !important; }
+
+.caja-titulo { margin: 4px 0 -8px; font-size: 1.05rem; }
+
+/* Formulario de entrega */
+.caja-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  align-items: end;
+  padding: 20px;
+  background: #fff;
+  border: 1px solid #e0e9ed;
+  border-radius: 14px;
+}
+
+/* Tarjeta de diferencia con color */
+.caja .caja-tarjeta.caja-ok    { border-left-color: #2e8b57; }
+.caja .caja-tarjeta.caja-falta { border-left-color: #c0392b; }
+.caja .caja-tarjeta.caja-sobra { border-left-color: #d9822b; }
+
+/* Etiquetas Cuadra / Falta / Sobra */
+.caja-etiqueta {
+  display: inline-block;
+  padding: 3px 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border-radius: 999px;
+}
+.caja-etiqueta.caja-ok    { color: #1f6b41; background: #e2f4ea; }
+.caja-etiqueta.caja-falta { color: #a3342b; background: #fde7e5; }
+.caja-etiqueta.caja-sobra { color: #8a5412; background: #fdf0dc; }
+
+/* Cuadro de caja cerrada */
+.caja-cierre {
+  padding: 14px 18px;
+  color: #1f4f66;
+  background: #e8f3f8;
+  border: 1px solid #c3dde9;
+  border-radius: 12px;
+}
+
+/* Zona de cierre */
+.caja-cerrar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: end;
+  padding: 20px;
+  background: #fff;
+  border: 1px solid #e0e9ed;
+  border-radius: 14px;
+}
+.caja-cerrar .campo { flex: 1 1 260px; }
+
+/* Botón anular */
+#area .caja .btn-borrar {
+  padding: 6px 12px;
+  color: #a3342b;
+  background: #fff;
+  border: 1px solid #f0c3bf;
+}
+#area .caja .btn-borrar:hover {
+  background: #fde7e5;
+  transform: none;
+}

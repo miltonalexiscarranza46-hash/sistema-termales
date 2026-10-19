@@ -13,7 +13,7 @@ const modulos = [
   { nombre: 'Masajes', roles: ['masajista'], cargar: cargarMasajes },
   { nombre: 'Restaurante y bar', roles: ['mesero'] },
   { nombre: 'Inventario', roles: ['bodega', 'mesero'] },
-  { nombre: 'Caja', roles: ['cajero'] },
+  { nombre: 'Caja', roles: ['cajero'], cargar: cargarCaja },
   { nombre: 'Enviar reporte', roles: ['recepcionista', 'masajista', 'mesero', 'bodega', 'cajero'] },
   { nombre: 'Resumen del día', roles: ['administrador'], cargar: cargarResumen },
   { nombre: 'Gastos', roles: ['administrador'], cargar: cargarGastos },
