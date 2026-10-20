@@ -1,0 +1,71 @@
+/* ==========================================
+   PANTALLA DE INICIO (TODOS LOS ROLES)
+========================================== */
+
+.inicio { display: flex; flex-direction: column; gap: 22px; }
+
+.inicio-cabecera h2 {
+  margin: 0;
+  font-size: 26px;
+  color: #fff;
+}
+
+.inicio-cabecera p {
+  margin: 6px 0 0;
+  max-width: 62ch;
+  line-height: 1.5;
+  color: var(--texto-secundario, #b7c9d8);
+}
+
+.inicio-cabecera .inicio-fecha {
+  font-size: 14px;
+  text-transform: capitalize;
+  opacity: 0.85;
+}
+
+.inicio-subtitulo {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--texto-secundario, #b7c9d8);
+}
+
+.inicio-tarjetas {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+/* Tarjeta de módulo (se anula el estilo general de botones) */
+#area .inicio .inicio-tarjeta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  width: 100%;
+  padding: 18px 20px;
+  text-align: left;
+  color: #163b55;
+  background: #fff;
+  border: 1px solid #e0e9ed;
+  border-left: 5px solid var(--verde, #1fae7a);
+  border-radius: 14px;
+  box-shadow: none;
+  cursor: pointer;
+}
+
+#area .inicio .inicio-tarjeta strong { font-size: 16px; }
+
+#area .inicio .inicio-tarjeta span {
+  font-size: 13.5px;
+  font-weight: 400;
+  line-height: 1.45;
+  color: #637785;
+}
+
+#area .inicio .inicio-tarjeta:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.25);
+}
