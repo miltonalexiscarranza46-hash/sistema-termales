@@ -1,0 +1,123 @@
+/* ==========================================
+   MÓDULO: REPORTES (EMPLEADOS Y ADMINISTRADOR)
+========================================== */
+
+.reporte { display: flex; flex-direction: column; gap: 20px; }
+
+/* El atributo hidden debe ganar a los display de abajo */
+.reporte [hidden] { display: none !important; }
+
+.reporte-fecha {
+  margin: 0;
+  text-transform: capitalize;
+  color: var(--texto-secundario, #b7c9d8);
+}
+
+.reporte-titulo { margin: 0 0 -8px; font-size: 1.05rem; }
+
+.reporte-nota {
+  margin: 0;
+  line-height: 1.5;
+  color: var(--texto-secundario, #b7c9d8);
+}
+
+/* Aviso de estado */
+.reporte-estado {
+  padding: 14px 18px;
+  border: 1px solid;
+  border-radius: 12px;
+}
+.reporte-estado.pendiente { color: #8a5412; background: #fdf0dc; border-color: #f3d9ad; }
+.reporte-estado.enviado   { color: #1f4f66; background: #e8f3f8; border-color: #c3dde9; }
+.reporte-estado.leido     { color: #1f6b41; background: #e2f4ea; border-color: #b9e1c9; }
+
+/* Formulario */
+.reporte-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 20px;
+  background: #fff;
+  border: 1px solid #e0e9ed;
+  border-radius: 14px;
+}
+
+.reporte-form textarea {
+  width: 100%;
+  padding: 12px 14px;
+  font: inherit;
+  color: #2f3b40;
+  resize: vertical;
+  border: 1px solid #cfdde4;
+  border-radius: 10px;
+}
+
+.reporte-form small { align-self: flex-end; color: #637785; }
+.reporte-form button { align-self: flex-start; }
+
+
+/* ---------- Reportes recibidos (administrador) ---------- */
+
+.reporte-filtros {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  max-width: 720px;
+}
+
+.reporte-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border-radius: 999px;
+}
+.reporte-badge.sin-leer { color: #8a5412; background: #fdf0dc; }
+.reporte-badge.leido    { color: #1f6b41; background: #e2f4ea; }
+
+.reporte-faltan { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.reporte-chip {
+  padding: 6px 12px;
+  font-size: 0.9rem;
+  color: #8a5412;
+  background: #fdf0dc;
+  border: 1px solid #f3d9ad;
+  border-radius: 999px;
+}
+
+/* Detalle de un reporte */
+.reporte-detalle {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 20px;
+  color: #2f3b40;
+  background: #fff;
+  border: 1px solid #e0e9ed;
+  border-radius: 14px;
+}
+.reporte-detalle h3 { margin: 0; color: #163b55; }
+.reporte-detalle .reporte-subtitulo { margin: 0 0 -6px; color: #163b55; }
+.reporte-detalle .reporte-meta { margin: 0; font-size: 0.92rem; color: #637785; }
+.reporte-detalle .reporte-obs {
+  margin: 0;
+  padding: 12px 14px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  background: #f3f8f8;
+  border-radius: 10px;
+}
+.reporte-detalle-botones { display: flex; flex-wrap: wrap; gap: 10px; }
+
+/* Botón secundario (Ver, Cerrar) */
+#area .reporte .btn-secundario {
+  padding: 6px 14px;
+  color: #1f4f66;
+  background: #fff;
+  border: 1px solid #c3dde9;
+}
+#area .reporte .btn-secundario:hover {
+  background: #e8f3f8;
+  transform: none;
+}
