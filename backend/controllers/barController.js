@@ -1,266 +1,430 @@
-// backend/controllers/barController.js
-// AJUSTAR: misma ruta de conexión que usa gastosController.js
 const pool = require('../config/db');
 
-// ── Nombres que dependen de tu base (cámbialos aquí si difieren) ──
-const TABLA_DETALLE = 'detalle_pedidos'; // columnas: id, pedido_id, producto_id, cantidad, precio_unitario
-// pedidos debe tener: id, mesero_id, total, estado_cuenta, cobrado_por, metodo_pago, fecha_pago
+const AREAS_BAR = ['restaurante', 'bar'];
 const METODOS_PAGO = ['efectivo', 'tarjeta', 'transferencia'];
+const ESTADOS = ['abierto', 'cobrado', 'cancelado'];
 
-class HttpError extends Error {
-  constructor(status, mensaje) {
-    super(mensaje);
-    this.status = status;
-  }
+const fallo = (res, codigo, mensaje) =>
+  res.status(codigo).json({ ok: false, mensaje });
+
+// Entero positivo o null
+const idValido = (v) => {
+  const n = Number(v);
+  return Number.isInteger(n) && n > 0 ? n : null;
+};
+
+// Pedido del mesero, bloqueado para que nadie más lo modifique a la vez
+async function bloquearPedido(client, pedidoId, meseroId) {
+  const r = await client.query(
+    `SELECT id, area_id, estado FROM pedidos
+     WHERE id = $1 AND mesero_id = $2
+     FOR UPDATE`,
+    [pedidoId, meseroId]
+  );
+  return r.rows[0] || null;
 }
 
-const idValido = (v) => Number.isInteger(v) && v > 0;
+// Devuelve el pedido abierto del mesero; si no, responde el error y devuelve null
+async function pedidoAbierto(client, res, pedidoId, meseroId) {
+  const ped = await bloquearPedido(client, pedidoId, meseroId);
+  if (!ped) {
+    await client.query('ROLLBACK');
+    fallo(res, 404, 'El pedido no existe');
 
-// Ejecuta fn dentro de una transacción. fn devuelve { status, body }.
-async function enTransaccion(res, etiqueta, fn) {
+    return null;
+  }
+  if (ped.estado !== 'abierto') {
+    await client.query('ROLLBACK');
+    fallo(res, 409, 'El pedido ya no está abierto (' + ped.estado + ')');
+    return null;
+  }
+  return ped;
+}
+
+// Suma las líneas y guarda el total en el pedido (lo calcula el servidor)
+async function recalcularTotal(client, pedidoId) {
+  const r = await client.query(
+    `UPDATE pedidos
+     SET total = COALESCE((SELECT SUM(subtotal) FROM detalle_pedido WHERE pedido_id = $1), 0)
+     WHERE id = $1
+     RETURNING total`,
+    [pedidoId]
+  );
+  return r.rows[0].total;
+}
+
+/* ---------- Consultas ---------- */
+
+exports.catalogos = async (req, res) => {
+  try {
+    const r = await pool.query(
+      'SELECT id, nombre FROM areas WHERE nombre = ANY($1) ORDER BY id',
+      [AREAS_BAR]
+    );
+    res.json({ ok: true, areas: r.rows, metodos_pago: METODOS_PAGO });
+  } catch (e) {
+
+    fallo(res, 500, e.message);
+  }
+};
+
+exports.productos = async (req, res) => {
+  try {
+    const areaId = idValido(req.query.area_id);
+    if (!areaId) return fallo(res, 400, 'Elige el área');
+
+    const r = await pool.query(
+      `SELECT p.id, p.nombre, cp.nombre AS categoria, p.precio, p.existencias
+       FROM productos p
+       JOIN categorias_producto cp ON cp.id = p.categoria_id
+       JOIN areas a ON a.id = p.area_id
+       WHERE p.activo = TRUE AND p.area_id = $1 AND a.nombre = ANY($2)
+       ORDER BY cp.nombre, p.nombre`,
+      [areaId, AREAS_BAR]
+    );
+    res.json({ ok: true, productos: r.rows });
+  } catch (e) {
+    fallo(res, 500, e.message);
+  }
+};
+
+exports.listarPedidos = async (req, res) => {
+  try {
+    const estado = req.query.estado || 'abierto';
+    if (!ESTADOS.includes(estado)) return fallo(res, 400, 'Estado inválido');
+
+    // Abiertos: todos. Cobrados y cancelados: solo los de hoy.
+    const filtroFecha =
+      estado === 'cobrado' ? 'AND p.fecha_pago::date = CURRENT_DATE'
+
+      : estado === 'cancelado' ? 'AND p.fecha_hora::date = CURRENT_DATE'
+      : '';
+
+    const r = await pool.query(
+      `SELECT p.id, a.nombre AS area, p.mesa, p.total, p.estado, p.metodo_pago,
+              p.fecha_hora, p.fecha_pago,
+              (SELECT COALESCE(SUM(d.cantidad), 0)::int
+               FROM detalle_pedido d WHERE d.pedido_id = p.id) AS articulos
+       FROM pedidos p
+       JOIN areas a ON a.id = p.area_id
+       WHERE p.mesero_id = $1 AND p.estado = $2 ${filtroFecha}
+       ORDER BY p.id DESC`,
+      [req.usuario.id, estado]
+    );
+    res.json({ ok: true, pedidos: r.rows });
+  } catch (e) {
+    fallo(res, 500, e.message);
+  }
+};
+
+exports.verPedido = async (req, res) => {
+  try {
+    const id = idValido(req.params.id);
+    if (!id) return fallo(res, 400, 'Pedido inválido');
+
+    const p = await pool.query(
+      `SELECT p.id, p.area_id, a.nombre AS area, p.mesa, p.total, p.estado,
+              p.metodo_pago, p.fecha_hora, p.fecha_pago
+       FROM pedidos p
+       JOIN areas a ON a.id = p.area_id
+       WHERE p.id = $1 AND p.mesero_id = $2`,
+      [id, req.usuario.id]
+
+    );
+    if (!p.rows[0]) return fallo(res, 404, 'El pedido no existe');
+
+    const d = await pool.query(
+      `SELECT d.producto_id, pr.nombre AS producto, d.cantidad,
+              d.precio_unitario, d.subtotal
+       FROM detalle_pedido d
+       JOIN productos pr ON pr.id = d.producto_id
+       WHERE d.pedido_id = $1
+       ORDER BY pr.nombre`,
+      [id]
+    );
+    res.json({ ok: true, pedido: p.rows[0], detalle: d.rows });
+  } catch (e) {
+    fallo(res, 500, e.message);
+  }
+};
+
+exports.miResumen = async (req, res) => {
+  try {
+    const r = await pool.query(
+      `SELECT metodo_pago, COUNT(*)::int AS cuentas, COALESCE(SUM(total), 0) AS total
+       FROM pedidos
+       WHERE estado = 'cobrado' AND cobrado_por = $1
+         AND fecha_pago::date = CURRENT_DATE
+       GROUP BY metodo_pago
+       ORDER BY metodo_pago`,
+      [req.usuario.id]
+    );
+    const total = r.rows.reduce((s, x) => s + Number(x.total), 0);
+    const cuentas = r.rows.reduce((s, x) => s + x.cuentas, 0);
+    res.json({ ok: true, por_metodo: r.rows, total, cuentas });
+
+  } catch (e) {
+    fallo(res, 500, e.message);
+  }
+};
+
+/* ---------- Pedidos ---------- */
+
+exports.abrirPedido = async (req, res) => {
+  try {
+    const areaId = idValido(req.body.area_id);
+    const mesa = String(req.body.mesa || '').trim();
+
+    if (!areaId) return fallo(res, 400, 'Elige el área');
+    if (!mesa || mesa.length > 20) {
+      return fallo(res, 400, 'Escribe la mesa (máximo 20 caracteres)');
+    }
+
+    const a = await pool.query(
+      'SELECT id FROM areas WHERE id = $1 AND nombre = ANY($2)',
+      [areaId, AREAS_BAR]
+    );
+    if (!a.rows[0]) return fallo(res, 400, 'El área no es válida para pedidos');
+
+    const r = await pool.query(
+      `INSERT INTO pedidos (area_id, mesa, mesero_id)
+       VALUES ($1, $2, $3)
+       RETURNING id, area_id, mesa, total, estado, fecha_hora`,
+      [areaId, mesa, req.usuario.id]
+    );
+    res.status(201).json({ ok: true, pedido: r.rows[0] });
+  } catch (e) {
+    fallo(res, 500, e.message);
+
+  }
+};
+
+// Agrega un producto (si ya está en el pedido, suma la cantidad)
+exports.agregarItem = async (req, res) => {
   const client = await pool.connect();
   try {
-    await client.query('BEGIN');
-    const { status, body } = await fn(client);
-    await client.query('COMMIT');
-    res.status(status).json(body);
-  } catch (err) {
-    await client.query('ROLLBACK');
-    if (err instanceof HttpError) {
-      return res.status(err.status).json({ mensaje: err.message });
+    const pedidoId = idValido(req.params.id);
+    const productoId = idValido(req.body.producto_id);
+    const cantidad = Number(req.body.cantidad === undefined ? 1 : req.body.cantidad);
+
+    if (!pedidoId || !productoId) return fallo(res, 400, 'Pedido o producto inválido');
+    if (!Number.isInteger(cantidad) || cantidad < 1 || cantidad > 999) {
+      return fallo(res, 400, 'La cantidad debe ser un entero entre 1 y 999');
     }
-    console.error(`${etiqueta}:`, err);
-    res.status(500).json({ mensaje: `Error en ${etiqueta}` });
+
+    await client.query('BEGIN');
+
+    const ped = await pedidoAbierto(client, res, pedidoId, req.usuario.id);
+    if (!ped) return;
+
+    // El precio sale de la base de datos, nunca del navegador
+    const pr = await client.query(
+      `SELECT nombre, precio, existencias FROM productos
+       WHERE id = $1 AND activo = TRUE AND area_id = $2`,
+      [productoId, ped.area_id]
+    );
+    if (!pr.rows[0]) {
+      await client.query('ROLLBACK');
+      return fallo(res, 404, 'El producto no existe en esa área');
+    }
+
+
+    // Aviso temprano de stock (no lo reserva; el cobro lo valida de nuevo)
+    const previa = await client.query(
+      'SELECT cantidad FROM detalle_pedido WHERE pedido_id = $1 AND producto_id = $2',
+      [pedidoId, productoId]
+    );
+    const nueva = (previa.rows[0] ? previa.rows[0].cantidad : 0) + cantidad;
+    if (nueva > pr.rows[0].existencias) {
+      await client.query('ROLLBACK');
+      return fallo(
+        res, 409,
+        'No hay suficiente existencia de ' + pr.rows[0].nombre +
+        ' (hay ' + pr.rows[0].existencias + ')'
+      );
+    }
+
+    // Si ya estaba, se conserva el precio con el que se agregó
+    await client.query(
+      `INSERT INTO detalle_pedido (pedido_id, producto_id, cantidad, precio_unitario, subtotal)
+       VALUES ($1, $2, $3::int, $4::numeric, $3::int * $4::numeric)
+       ON CONFLICT (pedido_id, producto_id) DO UPDATE
+       SET cantidad = detalle_pedido.cantidad + EXCLUDED.cantidad,
+           subtotal = (detalle_pedido.cantidad + EXCLUDED.cantidad) * detalle_pedido.precio_unitario`,
+      [pedidoId, productoId, cantidad, pr.rows[0].precio]
+    );
+
+    const total = await recalcularTotal(client, pedidoId);
+    await client.query('COMMIT');
+    res.status(201).json({ ok: true, cantidad: nueva, total });
+  } catch (e) {
+    await client.query('ROLLBACK').catch(() => {});
+    fallo(res, 500, e.message);
+  } finally {
+
+    client.release();
+  }
+};
+
+// Cambia la cantidad de un producto del pedido (0 lo quita)
+exports.cambiarCantidad = async (req, res) => {
+  const client = await pool.connect();
+  try {
+    const pedidoId = idValido(req.params.id);
+    const productoId = idValido(req.params.productoId);
+    const cantidad = Number(req.body.cantidad);
+
+    if (!pedidoId || !productoId) return fallo(res, 400, 'Pedido o producto inválido');
+    if (!Number.isInteger(cantidad) || cantidad < 0 || cantidad > 999) {
+      return fallo(res, 400, 'La cantidad debe ser un entero entre 0 y 999 (0 quita el producto)');
+    }
+
+    await client.query('BEGIN');
+
+    const ped = await pedidoAbierto(client, res, pedidoId, req.usuario.id);
+    if (!ped) return;
+
+    let afectadas;
+    if (cantidad === 0) {
+      afectadas = await client.query(
+        'DELETE FROM detalle_pedido WHERE pedido_id = $1 AND producto_id = $2',
+        [pedidoId, productoId]
+      );
+    } else {
+      const pr = await client.query(
+        'SELECT nombre, existencias FROM productos WHERE id = $1',
+        [productoId]
+
+      );
+      if (pr.rows[0] && cantidad > pr.rows[0].existencias) {
+        await client.query('ROLLBACK');
+        return fallo(
+          res, 409,
+          'No hay suficiente existencia de ' + pr.rows[0].nombre +
+          ' (hay ' + pr.rows[0].existencias + ')'
+        );
+      }
+      afectadas = await client.query(
+        `UPDATE detalle_pedido
+         SET cantidad = $3::int, subtotal = $3::int * precio_unitario
+         WHERE pedido_id = $1 AND producto_id = $2`,
+        [pedidoId, productoId, cantidad]
+      );
+    }
+
+    if (afectadas.rowCount === 0) {
+      await client.query('ROLLBACK');
+      return fallo(res, 404, 'Ese producto no está en el pedido');
+    }
+
+    const total = await recalcularTotal(client, pedidoId);
+    await client.query('COMMIT');
+    res.json({ ok: true, total });
+  } catch (e) {
+    await client.query('ROLLBACK').catch(() => {});
+    fallo(res, 500, e.message);
   } finally {
     client.release();
   }
-}
-
-// Bloquea el pedido SOLO si es del mesero. Si no existe o es de otro: 404.
-async function bloquearPedido(client, pedidoId, meseroId) {
-  const { rows } = await client.query(
-    'SELECT * FROM pedidos WHERE id = $1 AND mesero_id = $2 FOR UPDATE',
-    [pedidoId, meseroId]
-  );
-  if (rows.length === 0) throw new HttpError(404, 'Pedido no encontrado');
-  return rows[0];
-}
-
-function exigirAbierto(pedido) {
-  if (pedido.estado_cuenta !== 'abierta') {
-    throw new HttpError(409, 'El pedido ya no está abierto y no se puede modificar');
-  }
-}
-
-async function recalcularTotal(client, pedidoId) {
-  await client.query(
-    `UPDATE pedidos
-        SET total = COALESCE((SELECT SUM(cantidad * precio_unitario)
-                                FROM ${TABLA_DETALLE}
-                               WHERE pedido_id = $1), 0)
-      WHERE id = $1`,
-    [pedidoId]
-  );
-}
-
-async function cargarPedido(client, pedidoId) {
-  const p = await client.query('SELECT * FROM pedidos WHERE id = $1', [pedidoId]);
-  const items = await client.query(
-    `SELECT d.id, d.producto_id, pr.nombre, d.cantidad, d.precio_unitario,
-            (d.cantidad * d.precio_unitario) AS subtotal
-       FROM ${TABLA_DETALLE} d
-       JOIN productos pr ON pr.id = d.producto_id
-      WHERE d.pedido_id = $1
-      ORDER BY d.id`,
-    [pedidoId]
-  );
-  return { ...p.rows[0], items: items.rows };
-}
-
-// GET /api/bar/pedidos?estado=abierta|pagada|cancelada   (mesero: solo los suyos)
-exports.listarPedidos = async (req, res) => {
-  const { estado } = req.query;
-  if (estado && !['abierta', 'pagada', 'cancelada'].includes(estado)) {
-    return res.status(400).json({ mensaje: 'estado inválido' });
-  }
-  try {
-    const { rows } = await pool.query(
-      `SELECT * FROM pedidos
-        WHERE mesero_id = $1 AND ($2::text IS NULL OR estado_cuenta = $2)
-        ORDER BY id DESC
-        LIMIT 100`,
-      [req.usuario.id, estado || null]
-    );
-    res.json(rows);
-  } catch (err) {
-    console.error('listarPedidos:', err);
-    res.status(500).json({ mensaje: 'Error al listar pedidos' });
-  }
 };
 
-// POST /api/bar/pedidos   → abre un pedido vacío
-exports.abrirPedido = async (req, res) => {
+
+// Cobra: descuenta inventario, guarda quién cobró, cómo pagó y cuándo
+exports.cobrar = async (req, res) => {
+  const client = await pool.connect();
   try {
-    const { rows } = await pool.query(
-      `INSERT INTO pedidos (mesero_id, total, estado_cuenta)
-       VALUES ($1, 0, 'abierta')
-       RETURNING *`,
-      [req.usuario.id]
-    );
-    res.status(201).json(rows[0]);
-  } catch (err) {
-    console.error('abrirPedido:', err);
-    res.status(500).json({ mensaje: 'Error al abrir el pedido' });
-  }
-};
+    const pedidoId = idValido(req.params.id);
+    const metodo = req.body.metodo_pago;
 
-// GET /api/bar/pedidos/:id
-exports.obtenerPedido = async (req, res) => {
-  const pedidoId = parseInt(req.params.id, 10);
-  if (!idValido(pedidoId)) return res.status(400).json({ mensaje: 'id inválido' });
-
-  try {
-    const { rows } = await pool.query(
-      'SELECT id FROM pedidos WHERE id = $1 AND mesero_id = $2',
-      [pedidoId, req.usuario.id]
-    );
-    if (rows.length === 0) return res.status(404).json({ mensaje: 'Pedido no encontrado' });
-    res.json(await cargarPedido(pool, pedidoId));
-  } catch (err) {
-    console.error('obtenerPedido:', err);
-    res.status(500).json({ mensaje: 'Error al obtener el pedido' });
-  }
-};
-
-// POST /api/bar/pedidos/:id/items   body: { producto_id, cantidad }
-// El precio NUNCA viene del navegador: sale de la tabla productos.
-exports.agregarItem = async (req, res) => {
-  const pedidoId = parseInt(req.params.id, 10);
-  const { producto_id, cantidad } = req.body;
-
-  if (!idValido(pedidoId)) return res.status(400).json({ mensaje: 'id de pedido inválido' });
-  if (!idValido(producto_id)) return res.status(400).json({ mensaje: 'producto_id inválido' });
-  if (!Number.isInteger(cantidad) || cantidad <= 0) {
-    return res.status(400).json({ mensaje: 'La cantidad debe ser un entero mayor a 0' });
-  }
-
-  await enTransaccion(res, 'agregarItem', async (client) => {
-    const pedido = await bloquearPedido(client, pedidoId, req.usuario.id);
-    exigirAbierto(pedido);
-
-    const prod = await client.query(
-      'SELECT id, precio FROM productos WHERE id = $1 AND activo = TRUE',
-      [producto_id]
-    );
-    if (prod.rows.length === 0) throw new HttpError(404, 'Producto no encontrado');
-    const precio = prod.rows[0].precio;
-
-    const existente = await client.query(
-      `SELECT id FROM ${TABLA_DETALLE} WHERE pedido_id = $1 AND producto_id = $2`,
-      [pedidoId, producto_id]
-    );
-    if (existente.rows.length > 0) {
-      await client.query(
-        `UPDATE ${TABLA_DETALLE}
-            SET cantidad = cantidad + $1, precio_unitario = $2
-          WHERE id = $3`,
-        [cantidad, precio, existente.rows[0].id]
-      );
-    } else {
-      await client.query(
-        `INSERT INTO ${TABLA_DETALLE} (pedido_id, producto_id, cantidad, precio_unitario)
-         VALUES ($1, $2, $3, $4)`,
-        [pedidoId, producto_id, cantidad, precio]
-      );
+    if (!pedidoId) return fallo(res, 400, 'Pedido inválido');
+    if (!METODOS_PAGO.includes(metodo)) {
+      return fallo(res, 400, 'Elige cómo pagó el cliente (efectivo, tarjeta o transferencia)');
     }
 
-    await recalcularTotal(client, pedidoId);
-    return { status: 201, body: await cargarPedido(client, pedidoId) };
-  });
-};
+    await client.query('BEGIN');
 
-// DELETE /api/bar/pedidos/:id/items/:itemId
-exports.quitarItem = async (req, res) => {
-  const pedidoId = parseInt(req.params.id, 10);
-  const itemId = parseInt(req.params.itemId, 10);
-  if (!idValido(pedidoId) || !idValido(itemId)) {
-    return res.status(400).json({ mensaje: 'id inválido' });
-  }
+    const ped = await pedidoAbierto(client, res, pedidoId, req.usuario.id);
+    if (!ped) return;
 
-  await enTransaccion(res, 'quitarItem', async (client) => {
-    const pedido = await bloquearPedido(client, pedidoId, req.usuario.id);
-    exigirAbierto(pedido);
-
-    const del = await client.query(
-      `DELETE FROM ${TABLA_DETALLE} WHERE id = $1 AND pedido_id = $2`,
-      [itemId, pedidoId]
-    );
-    if (del.rowCount === 0) throw new HttpError(404, 'Línea del pedido no encontrada');
-
-    await recalcularTotal(client, pedidoId);
-    return { status: 200, body: await cargarPedido(client, pedidoId) };
-  });
-};
-
-// POST /api/bar/pedidos/:id/cobrar   body: { metodo_pago }
-// Una sola transacción: valida stock, descuenta, registra movimientos y marca pagado.
-exports.cobrarPedido = async (req, res) => {
-  const pedidoId = parseInt(req.params.id, 10);
-  const { metodo_pago } = req.body;
-
-  if (!idValido(pedidoId)) return res.status(400).json({ mensaje: 'id inválido' });
-  if (!METODOS_PAGO.includes(metodo_pago)) {
-    return res.status(400).json({ mensaje: `metodo_pago debe ser: ${METODOS_PAGO.join(', ')}` });
-  }
-
-  await enTransaccion(res, 'cobrarPedido', async (client) => {
-    const pedido = await bloquearPedido(client, pedidoId, req.usuario.id);
-    exigirAbierto(pedido);
-
-    // Cantidad total por producto, ordenada por id para bloquear siempre en el mismo orden
+    // Bloquea los productos en orden para evitar bloqueos cruzados entre meseros
     const lineas = await client.query(
-      `SELECT producto_id, SUM(cantidad)::int AS cantidad
-         FROM ${TABLA_DETALLE}
-        WHERE pedido_id = $1
-        GROUP BY producto_id
-        ORDER BY producto_id`,
+      `SELECT d.producto_id, d.cantidad, pr.nombre, pr.existencias
+       FROM detalle_pedido d
+       JOIN productos pr ON pr.id = d.producto_id
+       WHERE d.pedido_id = $1
+       ORDER BY d.producto_id
+       FOR UPDATE OF pr`,
       [pedidoId]
     );
+
     if (lineas.rows.length === 0) {
-      throw new HttpError(400, 'No se puede cobrar un pedido sin productos');
+      await client.query('ROLLBACK');
+      return fallo(res, 400, 'El pedido no tiene productos');
+
+    }
+
+    const faltantes = lineas.rows.filter((l) => l.cantidad > l.existencias);
+    if (faltantes.length > 0) {
+      await client.query('ROLLBACK');
+      return fallo(
+        res, 409,
+        'No hay suficiente existencia: ' +
+        faltantes
+          .map((l) => l.nombre + ' (pide ' + l.cantidad + ', hay ' + l.existencias + ')')
+          .join('; ')
+      );
     }
 
     for (const l of lineas.rows) {
-      const { rows } = await client.query(
-        'SELECT id, nombre, stock FROM productos WHERE id = $1 FOR UPDATE',
-        [l.producto_id]
-      );
-      if (rows.length === 0) throw new HttpError(409, `El producto ${l.producto_id} ya no existe`);
-
-      const { nombre, stock } = rows[0];
-      if (stock < l.cantidad) {
-        throw new HttpError(409, `Stock insuficiente de "${nombre}": hay ${stock} y el pedido pide ${l.cantidad}`);
-      }
-
-      const nuevoStock = stock - l.cantidad;
-      await client.query('UPDATE productos SET stock = $1 WHERE id = $2', [nuevoStock, l.producto_id]);
       await client.query(
-        `INSERT INTO inventario_movimientos
-           (producto_id, tipo, cantidad, stock_resultante, motivo, usuario_id)
-         VALUES ($1, 'salida', $2, $3, $4, $5)`,
-        [l.producto_id, l.cantidad, nuevoStock, `Venta pedido #${pedidoId}`, req.usuario.id]
+        'UPDATE productos SET existencias = existencias - $2 WHERE id = $1',
+        [l.producto_id, l.cantidad]
+      );
+      await client.query(
+        `INSERT INTO movimientos_inventario (producto_id, tipo, cantidad, motivo, usuario_id)
+         VALUES ($1, 'salida', $2, $3, $4)`,
+        [l.producto_id, l.cantidad, 'Venta pedido #' + pedidoId, req.usuario.id]
       );
     }
 
-    // El total lo calcula el servidor, nunca el navegador
     await recalcularTotal(client, pedidoId);
-    await client.query(
+
+    const r = await client.query(
       `UPDATE pedidos
-          SET estado_cuenta = 'pagada', cobrado_por = $1, metodo_pago = $2, fecha_pago = NOW()
-        WHERE id = $3`,
-      [req.usuario.id, metodo_pago, pedidoId]
+       SET estado = 'cobrado', cobrado_por = $2, metodo_pago = $3, fecha_pago = NOW()
+       WHERE id = $1
+
+       RETURNING id, total, estado, metodo_pago, fecha_pago`,
+      [pedidoId, req.usuario.id, metodo]
     );
 
-    return { status: 200, body: await cargarPedido(client, pedidoId) };
-  });
+    await client.query('COMMIT');
+    res.json({ ok: true, pedido: r.rows[0] });
+  } catch (e) {
+    await client.query('ROLLBACK').catch(() => {});
+    fallo(res, 500, e.message);
+  } finally {
+    client.release();
+  }
+};
+
+// Cancela un pedido abierto (no mueve inventario: nunca se había descontado)
+exports.cancelar = async (req, res) => {
+  try {
+    const pedidoId = idValido(req.params.id);
+    if (!pedidoId) return fallo(res, 400, 'Pedido inválido');
+
+    const r = await pool.query(
+      `UPDATE pedidos SET estado = 'cancelado'
+       WHERE id = $1 AND mesero_id = $2 AND estado = 'abierto'
+       RETURNING id, estado`,
+      [pedidoId, req.usuario.id]
+    );
+    if (!r.rows[0]) return fallo(res, 404, 'El pedido no existe o ya no está abierto');
+
+    res.json({ ok: true, pedido: r.rows[0] });
+  } catch (e) {
+    fallo(res, 500, e.message);
+  }
+
 };
