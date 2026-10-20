@@ -23,6 +23,11 @@ async function cargarResumen(area) {
           <span>Balance</span>
           <strong id="balanceDia">$0.00</strong>
         </div>
+                <div class="resumen-item" id="tarjetaCaja">
+          <span>Caja del día</span>
+          <strong id="estadoCaja">-</strong>
+          <small id="detalleCaja"></small>
+        </div>
       </div>
 
       <h2 class="subtitulo">Ingresos por área y empleado</h2>
@@ -112,6 +117,27 @@ async function cargarResumen(area) {
     area.querySelector('#balanceDia').textContent = dinero(d.balance);
     area.querySelector('#tarjetaBalance')
       .classList.toggle('balance-negativo', d.balance < 0);
+      
+    // Cierre de caja del día
+    const tarjetaCaja = area.querySelector('#tarjetaCaja');
+    const estadoCaja = area.querySelector('#estadoCaja');
+    const detalleCaja = area.querySelector('#detalleCaja');
+    tarjetaCaja.classList.remove('caja-ok', 'caja-falta', 'caja-sobra');
+
+    if (d.caja) {
+      const dif = d.caja.diferencia;
+      estadoCaja.textContent =
+        dif === 0 ? 'Cuadra' : dif < 0 ? 'Falta ' + dinero(-dif) : 'Sobra ' + dinero(dif);
+      tarjetaCaja.classList.add(dif === 0 ? 'caja-ok' : dif < 0 ? 'caja-falta' : 'caja-sobra');
+      detalleCaja.textContent =
+        'Cerrada por ' + d.caja.cerrado_por +
+        ' · recibido ' + dinero(d.caja.recibido) +
+        ' de ' + dinero(d.caja.esperado) +
+        (d.caja.nota ? ' · ' + d.caja.nota : '');
+    } else {
+      estadoCaja.textContent = 'Sin cerrar';
+      detalleCaja.textContent = '';
+    }
 
     llenarTabla(
       area.querySelector('#filasIngresos'),

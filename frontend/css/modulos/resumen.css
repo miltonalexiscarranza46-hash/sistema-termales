@@ -21,3 +21,14 @@
 .resumen-dia #tarjetaBalance.balance-negativo strong { color: #a3342b; }
 
 .resumen-dia .nota { font-size: 13px; color: #637785; line-height: 1.5; }
+
+/* Tarjeta de caja del día */
+.resumen-dia #tarjetaCaja small {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  color: #637785;
+}
+.resumen-dia #tarjetaCaja.caja-ok    { border-left-color: #2e8b57; }
+.resumen-dia #tarjetaCaja.caja-falta { border-left-color: #c0392b; }
+.resumen-dia #tarjetaCaja.caja-sobra { border-left-color: #d9822b; }
