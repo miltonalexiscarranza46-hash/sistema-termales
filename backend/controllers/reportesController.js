@@ -211,7 +211,7 @@ exports.listar = async (req, res) => {
       `SELECT u.id, u.nombre AS empleado, ro.nombre AS rol
        FROM usuarios u
        JOIN roles ro ON ro.id = u.rol_id
-       WHERE ro.nombre = ANY($1::text[])
+             WHERE u.activo = TRUE AND ro.nombre = ANY($1::text[])
          AND ($2::text IS NULL OR ro.nombre = $2)
          AND NOT EXISTS (
            SELECT 1 FROM reportes r

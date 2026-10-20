@@ -14,9 +14,9 @@ const modulos = [
     descripcion: 'Crea reservas, revisa la disponibilidad y cancela cuando haga falta.' },
   { nombre: 'Masajes', roles: ['masajista'], cargar: cargarMasajes,
     descripcion: 'Agenda las citas con su hora, cóbralas o cancélalas.' },
-  { nombre: 'Restaurante y bar', roles: ['mesero'],
+    { nombre: 'Restaurante y bar', roles: ['mesero'], cargar: cargarBar,
     descripcion: 'Toma los pedidos y cobra las cuentas del restaurante y el bar.' },
-  { nombre: 'Inventario', roles: ['bodega', 'mesero'],
+  { nombre: 'Inventario', roles: ['bodega', 'mesero'], cargar: cargarInventario,
     descripcion: 'Consulta las existencias y registra entradas y salidas de productos.' },
   { nombre: 'Caja', roles: ['cajero'], cargar: cargarCaja,
     descripcion: 'Recibe el efectivo de cada empleado y cierra la caja del día.' },
@@ -28,7 +28,7 @@ const modulos = [
     descripcion: 'Registra y consulta lo que se ha gastado cada día.' },
     { nombre: 'Reportes recibidos', roles: ['administrador'], cargar: cargarReportesRecibidos,
     descripcion: 'Lee los reportes que envía cada empleado.' },
-  { nombre: 'Usuarios', roles: ['administrador'],
+    { nombre: 'Usuarios', roles: ['administrador'], cargar: cargarUsuarios,
     descripcion: 'Crea y administra las cuentas del sistema.' },
 ];
 
