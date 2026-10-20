@@ -69,6 +69,24 @@ exports.dia = async (req, res) => {
        ORDER BY c.nombre, a.nombre`,
       [fecha]
     );
+        // Cierre de caja del día (si el cajero ya lo hizo)
+    const cie = await pool.query(
+      `SELECT c.esperado, c.recibido, c.diferencia, c.nota,
+              u.nombre AS cerrado_por, c.cerrado_en
+       FROM cierres_caja c
+       JOIN usuarios u ON u.id = c.cerrado_por
+       WHERE c.fecha = COALESCE($1::date, CURRENT_DATE)`,
+      [fecha]
+    );
+
+    const caja = cie.rows[0]
+      ? {
+          ...cie.rows[0],
+          esperado: Number(cie.rows[0].esperado),
+          recibido: Number(cie.rows[0].recibido),
+          diferencia: Number(cie.rows[0].diferencia),
+        }
+      : null;
 
     const ingresos = ing.rows.map((x) => ({ ...x, total: Number(x.total) }));
     const gastos = gas.rows.map((x) => ({ ...x, total: Number(x.total) }));
@@ -83,7 +101,8 @@ exports.dia = async (req, res) => {
       total_ingresos,
       gastos,
       total_gastos,
-      balance: r2(total_ingresos - total_gastos),
+            balance: r2(total_ingresos - total_gastos),
+      caja,
     });
   } catch (e) {
     res.status(500).json({ ok: false, mensaje: e.message });
