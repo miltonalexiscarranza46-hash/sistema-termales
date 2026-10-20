@@ -1,172 +1,183 @@
-// backend/controllers/inventarioController.js
-// AJUSTAR: la ruta de conexión a la base (copiar la misma que usa gastosController.js)
 const pool = require('../config/db');
 
-const TIPOS = ['entrada', 'salida', 'ajuste'];
-
-const esEnteroNoNegativo = (v) => Number.isInteger(v) && v >= 0;
-
-// GET /api/inventario/productos  (bodega, mesero)
-exports.listarProductos = async (req, res) => {
+exports.catalogos = async (req, res) => {
   try {
-    const { rows } = await pool.query(
-      `SELECT id, nombre, precio, stock, stock_minimo,
-              (stock <= stock_minimo) AS stock_bajo
-         FROM productos
-        WHERE activo = TRUE
-        ORDER BY nombre`
+    const cat = await pool.query('SELECT id, nombre FROM categorias_producto ORDER BY id');
+    const are = await pool.query(
+      "SELECT id, nombre FROM areas WHERE nombre IN ('restaurante', 'bar') ORDER BY id"
     );
-    res.json(rows);
-  } catch (err) {
-    console.error('listarProductos:', err);
-    res.status(500).json({ mensaje: 'Error al listar productos' });
+    res.json({ ok: true, categorias: cat.rows, areas: are.rows });
+  } catch (e) {
+    res.status(500).json({ ok: false, mensaje: e.message });
   }
 };
 
-// POST /api/inventario/productos  (bodega)
-// body: { nombre, precio, stock_minimo, stock_inicial }
-exports.crearProducto = async (req, res) => {
-  const { nombre, precio, stock_minimo = 0, stock_inicial = 0 } = req.body;
-
-  if (typeof nombre !== 'string' || nombre.trim() === '') {
-    return res.status(400).json({ mensaje: 'El nombre es obligatorio' });
-  }
-  if (typeof precio !== 'number' || !(precio >= 0)) {
-    return res.status(400).json({ mensaje: 'El precio debe ser un número mayor o igual a 0' });
-  }
-  if (!esEnteroNoNegativo(stock_minimo) || !esEnteroNoNegativo(stock_inicial)) {
-    return res.status(400).json({ mensaje: 'Stock mínimo e inicial deben ser enteros mayores o iguales a 0' });
-  }
-
-  const client = await pool.connect();
+exports.listarProductos = async (req, res) => {
   try {
+    const r = await pool.query(
+      `SELECT p.id, p.nombre, cp.nombre AS categoria, a.nombre AS area,
+              p.precio, p.existencias, p.stock_minimo,
+              (p.existencias <= p.stock_minimo) AS bajo_stock
+       FROM productos p
+       JOIN categorias_producto cp ON cp.id = p.categoria_id
+       JOIN areas a ON a.id = p.area_id
+       WHERE p.activo = TRUE
+       ORDER BY a.nombre, cp.nombre, p.nombre`
+    );
+    res.json({ ok: true, productos: r.rows });
+  } catch (e) {
+    res.status(500).json({ ok: false, mensaje: e.message });
+  }
+};
+
+exports.crearProducto = async (req, res) => {
+  const client = await pool.connect();
+
+  try {
+    const nombre = (req.body.nombre || '').trim();
+    const categoriaId = Number(req.body.categoria_id);
+    const areaId = Number(req.body.area_id);
+    const precio = Math.round(Number(req.body.precio) * 100) / 100;
+    const existencias = Number(req.body.existencias || 0);
+    const stockMinimo = Number(req.body.stock_minimo === undefined ? 5 : req.body.stock_minimo);
+
+    if (!nombre || nombre.length > 100) {
+      return res.status(400).json({ ok: false, mensaje: 'Escribe el nombre del producto (máximo 100 caracteres)' });
+    }
+    if (!Number.isInteger(categoriaId) || !Number.isInteger(areaId)) {
+      return res.status(400).json({ ok: false, mensaje: 'Elige la categoría y el área' });
+    }
+    if (!(precio >= 0) || precio >= 100000000) {
+      return res.status(400).json({ ok: false, mensaje: 'Precio inválido' });
+    }
+    if (!Number.isInteger(existencias) || existencias < 0 ||
+        !Number.isInteger(stockMinimo) || stockMinimo < 0) {
+      return res.status(400).json({ ok: false, mensaje: 'Existencias y stock mínimo deben ser enteros de cero en adelante' });
+    }
+
     await client.query('BEGIN');
 
-    const { rows } = await client.query(
-      `INSERT INTO productos (nombre, precio, stock, stock_minimo)
-       VALUES ($1, $2, $3, $4)
-       RETURNING id, nombre, precio, stock, stock_minimo`,
-      [nombre.trim(), precio, stock_inicial, stock_minimo]
+    const repetido = await client.query(
+      `SELECT 1 FROM productos
+       WHERE lower(nombre) = lower($1) AND area_id = $2 AND activo = TRUE
+       LIMIT 1`,
+      [nombre, areaId]
     );
-    const producto = rows[0];
+    if (repetido.rows[0]) {
+      await client.query('ROLLBACK');
+      return res.status(409).json({ ok: false, mensaje: 'Ya existe un producto con ese nombre en esa área' });
+    }
 
-    if (stock_inicial > 0) {
+    const p = await client.query(
+      `INSERT INTO productos (nombre, categoria_id, area_id, precio, existencias, stock_minimo)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       RETURNING id, nombre, existencias`,
+      [nombre, categoriaId, areaId, precio, existencias, stockMinimo]
+    );
+
+    if (existencias > 0) {
       await client.query(
-        `INSERT INTO movimientos_inventario
-           (producto_id, tipo, cantidad, stock_resultante, motivo, usuario_id)
-         VALUES ($1, 'entrada', $2, $2, 'Stock inicial', $3)`,
-        [producto.id, stock_inicial, req.usuario.id]
+        `INSERT INTO movimientos_inventario (producto_id, tipo, cantidad, motivo, usuario_id)
+         VALUES ($1, 'entrada', $2, 'Existencia inicial', $3)`,
+        [p.rows[0].id, existencias, req.usuario.id]
       );
     }
 
     await client.query('COMMIT');
-    res.status(201).json(producto);
-  } catch (err) {
-    await client.query('ROLLBACK');
-    if (err.code === '23505') {
-      return res.status(409).json({ mensaje: 'Ya existe un producto con ese nombre' });
+    res.status(201).json({ ok: true, producto: p.rows[0] });
+  } catch (e) {
+    await client.query('ROLLBACK').catch(() => {});
+    if (e.code === '23503') {
+      return res.status(400).json({ ok: false, mensaje: 'La categoría o el área no existe' });
     }
-    console.error('crearProducto:', err);
-    res.status(500).json({ mensaje: 'Error al crear el producto' });
+    res.status(500).json({ ok: false, mensaje: e.message });
   } finally {
     client.release();
   }
 };
 
-// POST /api/inventario/movimientos  (bodega)
-// body: { producto_id, tipo: 'entrada'|'salida'|'ajuste', cantidad, motivo }
-// - entrada: suma cantidad
-// - salida:  resta cantidad (409 si el stock quedaría negativo)
-// - ajuste:  cantidad es el NUEVO stock contado físicamente
 exports.registrarMovimiento = async (req, res) => {
-  const { producto_id, tipo, cantidad, motivo } = req.body;
-
-  if (!Number.isInteger(producto_id) || producto_id <= 0) {
-    return res.status(400).json({ mensaje: 'producto_id inválido' });
-  }
-  if (!TIPOS.includes(tipo)) {
-    return res.status(400).json({ mensaje: "tipo debe ser 'entrada', 'salida' o 'ajuste'" });
-  }
-  if (!Number.isInteger(cantidad) || cantidad < 0 || (tipo !== 'ajuste' && cantidad === 0)) {
-    return res.status(400).json({ mensaje: 'La cantidad debe ser un entero positivo (el ajuste admite 0)' });
-  }
-  if ((tipo === 'salida' || tipo === 'ajuste') && (typeof motivo !== 'string' || motivo.trim() === '')) {
-    return res.status(400).json({ mensaje: 'El motivo es obligatorio en salidas y ajustes' });
-  }
-
   const client = await pool.connect();
+
   try {
+    const productoId = Number(req.body.producto_id);
+    const tipo = req.body.tipo;
+    const cantidad = Number(req.body.cantidad);
+    const motivo = (req.body.motivo || '').trim();
+
+    if (!Number.isInteger(productoId)) {
+      return res.status(400).json({ ok: false, mensaje: 'Elige un producto' });
+    }
+    if (tipo !== 'entrada' && tipo !== 'salida') {
+      return res.status(400).json({ ok: false, mensaje: 'El tipo debe ser entrada o salida' });
+    }
+    if (!Number.isInteger(cantidad) || cantidad < 1) {
+      return res.status(400).json({ ok: false, mensaje: 'La cantidad debe ser un entero mayor que cero' });
+    }
+    if (!motivo || motivo.length > 100) {
+      return res.status(400).json({ ok: false, mensaje: 'Escribe el motivo (máximo 100 caracteres)' });
+    }
+
     await client.query('BEGIN');
 
-    // Bloquea la fila para que dos movimientos simultáneos no pisen el stock
-    const { rows } = await client.query(
-      'SELECT id, nombre, stock FROM productos WHERE id = $1 AND activo = TRUE FOR UPDATE',
-      [producto_id]
+    // Bloquea el producto para que dos movimientos no se pisen
+    const p = await client.query(
+      'SELECT existencias FROM productos WHERE id = $1 AND activo = TRUE FOR UPDATE',
+      [productoId]
     );
-    if (rows.length === 0) {
+    if (!p.rows[0]) {
       await client.query('ROLLBACK');
-      return res.status(404).json({ mensaje: 'Producto no encontrado' });
+      return res.status(404).json({ ok: false, mensaje: 'El producto no existe' });
     }
 
-    const { nombre, stock } = rows[0];
-    let nuevoStock;
-    if (tipo === 'entrada')      nuevoStock = stock + cantidad;
-    else if (tipo === 'salida')  nuevoStock = stock - cantidad;
-    else                         nuevoStock = cantidad;
-
-    if (nuevoStock < 0) {
+    const actual = p.rows[0].existencias;
+    if (tipo === 'salida' && actual < cantidad) {
       await client.query('ROLLBACK');
-      return res.status(409).json({
-        mensaje: `Stock insuficiente de "${nombre}": hay ${stock} y se intentan sacar ${cantidad}`
-      });
+      return res.status(409).json({ ok: false, mensaje: 'No hay suficiente existencia (hay ' + actual + ')' });
     }
 
-    await client.query('UPDATE productos SET stock = $1 WHERE id = $2', [nuevoStock, producto_id]);
+    const delta = tipo === 'entrada' ? cantidad : -cantidad;
+    const u = await client.query(
+      'UPDATE productos SET existencias = existencias + $2 WHERE id = $1 RETURNING existencias',
+      [productoId, delta]
+    );
 
-    const mov = await client.query(
-      `INSERT INTO movimientos_inventario
-         (producto_id, tipo, cantidad, stock_resultante, motivo, usuario_id)
-       VALUES ($1, $2, $3, $4, $5, $6)
-       RETURNING id, producto_id, tipo, cantidad, stock_resultante, motivo, usuario_id, fecha`,
-      [producto_id, tipo, cantidad, nuevoStock, motivo ? motivo.trim() : null, req.usuario.id]
+    await client.query(
+      `INSERT INTO movimientos_inventario (producto_id, tipo, cantidad, motivo, usuario_id)
+       VALUES ($1, $2, $3, $4, $5)`,
+      [productoId, tipo, cantidad, motivo, req.usuario.id]
     );
 
     await client.query('COMMIT');
-    res.status(201).json(mov.rows[0]);
-  } catch (err) {
-    await client.query('ROLLBACK');
-    console.error('registrarMovimiento:', err);
-    res.status(500).json({ mensaje: 'Error al registrar el movimiento' });
+    res.status(201).json({ ok: true, existencias: u.rows[0].existencias });
+  } catch (e) {
+    await client.query('ROLLBACK').catch(() => {});
+    res.status(500).json({ ok: false, mensaje: e.message });
   } finally {
     client.release();
   }
 };
 
-// GET /api/inventario/movimientos  (bodega)
-// query opcional: ?producto_id=3&limite=50
 exports.listarMovimientos = async (req, res) => {
-  const productoId = req.query.producto_id ? parseInt(req.query.producto_id, 10) : null;
-  let limite = parseInt(req.query.limite, 10);
-  if (!Number.isInteger(limite) || limite <= 0 || limite > 500) limite = 100;
-
-  if (req.query.producto_id && !Number.isInteger(productoId)) {
-    return res.status(400).json({ mensaje: 'producto_id inválido' });
-  }
-
   try {
-    const { rows } = await pool.query(
-      `SELECT m.id, m.producto_id, p.nombre AS producto, m.tipo, m.cantidad,
-              m.stock_resultante, m.motivo, m.usuario_id, m.fecha
-         FROM movimientos_inventario m
-         JOIN productos p ON p.id = m.producto_id
-        WHERE ($1::int IS NULL OR m.producto_id = $1)
-        ORDER BY m.fecha DESC, m.id DESC
-        LIMIT $2`,
-      [productoId, limite]
+    const productoId = req.query.producto_id ? Number(req.query.producto_id) : null;
+    if (productoId !== null && !Number.isInteger(productoId)) {
+      return res.status(400).json({ ok: false, mensaje: 'Producto inválido' });
+    }
+
+    const r = await pool.query(
+      `SELECT m.id, p.nombre AS producto, m.tipo, m.cantidad, m.motivo,
+              u.nombre AS registrado_por, m.fecha_hora
+       FROM movimientos_inventario m
+       JOIN productos p ON p.id = m.producto_id
+       JOIN usuarios u ON u.id = m.usuario_id
+       WHERE ($1::int IS NULL OR m.producto_id = $1)
+       ORDER BY m.id DESC
+       LIMIT 50`,
+      [productoId]
     );
-    res.json(rows);
-  } catch (err) {
-    console.error('listarMovimientos:', err);
-    res.status(500).json({ mensaje: 'Error al listar movimientos' });
+    res.json({ ok: true, movimientos: r.rows });
+  } catch (e) {
+    res.status(500).json({ ok: false, mensaje: e.message });
   }
 };
