@@ -14,7 +14,7 @@ const modulos = [
     descripcion: 'Crea reservas, revisa la disponibilidad y cancela cuando haga falta.' },
   { nombre: 'Masajes', roles: ['masajista'], cargar: cargarMasajes,
     descripcion: 'Agenda las citas con su hora, cóbralas o cancélalas.' },
-    { nombre: 'Restaurante y bar', roles: ['mesero'], cargar: cargarBar,
+  { nombre: 'Restaurante y bar', roles: ['mesero'], cargar: cargarBar,
     descripcion: 'Toma los pedidos y cobra las cuentas del restaurante y el bar.' },
   { nombre: 'Inventario', roles: ['bodega', 'mesero'], cargar: cargarInventario,
     descripcion: 'Consulta las existencias y registra entradas y salidas de productos.' },

@@ -3,7 +3,7 @@ const pool = require('../config/db');
 const esFecha = (s) => /^\d{4}-\d{2}-\d{2}$/.test(s || '');
 const r2 = (n) => Math.round(n * 100) / 100;
 
-// Roles que cobran a clientes y entregan efectivo a caja
+// Roles que cobran a clientes y entregan efectivo a caja (en minúsculas para comparación segura)
 const ROLES_QUE_ENTREGAN = ['recepcionista', 'masajista', 'mesero'];
 // Candado: una entrega y un cierre no pueden cruzarse
 const LOCK_CAJA = 7001;
@@ -47,11 +47,14 @@ const SQL_DIA = `
   JOIN roles ro ON ro.id = u.rol_id
   LEFT JOIN esp2 e2 ON e2.empleado_id = u.id
   LEFT JOIN ent n ON n.empleado_id = u.id
-  WHERE e2.empleado_id IS NOT NULL OR n.empleado_id IS NOT NULL
+  WHERE LOWER(ro.nombre) = ANY($2::text[])
+     OR e2.empleado_id IS NOT NULL 
+     OR n.empleado_id IS NOT NULL
   ORDER BY ro.nombre, u.nombre`;
 
 async function calcular(db, fecha) {
-  const q = await db.query(SQL_DIA, [fecha]);
+  // Pasamos el array de roles permitidos como segundo parámetro a la query
+  const q = await db.query(SQL_DIA, [fecha, ROLES_QUE_ENTREGAN]);
   const empleados = q.rows.map((x) => {
     const esperado = r2(Number(x.esperado));
     const entregado = r2(Number(x.entregado));
@@ -174,7 +177,10 @@ exports.entregar = async (req, res) => {
       await client.query('ROLLBACK');
       return res.status(404).json({ ok: false, mensaje: 'Empleado no encontrado' });
     }
-    if (!ROLES_QUE_ENTREGAN.includes(emp.rows[0].rol)) {
+
+    // Validación de rol insensible a mayúsculas/minúsculas
+    const rolUsuario = emp.rows[0].rol.toLowerCase();
+    if (!ROLES_QUE_ENTREGAN.includes(rolUsuario)) {
       await client.query('ROLLBACK');
       return res.status(400).json({ ok: false, mensaje: 'Ese empleado no entrega efectivo a caja' });
     }

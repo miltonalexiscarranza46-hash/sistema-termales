@@ -1,71 +1,150 @@
 /* ==========================================
-   PANTALLA DE INICIO (TODOS LOS ROLES)
+   PANTALLA DE INICIO (MINIMALISTA & TIPOGRÁFICO)
 ========================================== */
 
-.inicio { display: flex; flex-direction: column; gap: 22px; }
+.inicio { 
+  display: flex; 
+  flex-direction: column; 
+  gap: 32px; 
+}
+
+/* --- CABECERA Y TEXTOS PRINCIPALES --- */
 
 .inicio-cabecera h2 {
   margin: 0;
-  font-size: 26px;
-  color: #fff;
+  font-size: 34px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.03em;
+  /* Transición fluida para las letras */
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), 
+              letter-spacing 0.4s ease, 
+              color 0.4s ease;
+}
+
+/* Animación sutil al pasar el mouse por el título principal */
+.inicio-cabecera h2:hover {
+  color: var(--verde, #1fae7a);
+  letter-spacing: -0.01em;
 }
 
 .inicio-cabecera p {
-  margin: 6px 0 0;
-  max-width: 62ch;
-  line-height: 1.5;
-  color: var(--texto-secundario, #b7c9d8);
+  margin: 10px 0 0;
+  max-width: 60ch;
+  line-height: 1.6;
+  font-size: 15px;
+  color: var(--texto-secundario, #94a3b8);
+  transition: color 0.3s ease;
 }
 
 .inicio-cabecera .inicio-fecha {
-  font-size: 14px;
-  text-transform: capitalize;
-  opacity: 0.85;
+  display: block;
+  margin-bottom: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--verde, #1fae7a);
 }
 
 .inicio-subtitulo {
   margin: 0;
-  font-size: 14px;
-  font-weight: 700;
-  letter-spacing: 0.05em;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.15em;
   text-transform: uppercase;
-  color: var(--texto-secundario, #b7c9d8);
+  color: var(--texto-secundario, #64748b);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 12px;
 }
+
+/* --- LAYOUT DE MÓDULOS (SIN CUADROS) --- */
 
 .inicio-tarjetas {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 24px;
 }
 
-/* Tarjeta de módulo (se anula el estilo general de botones) */
+/* Módulo interactivo libre de cajas */
 #area .inicio .inicio-tarjeta {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 6px;
   width: 100%;
-  padding: 18px 20px;
+  padding: 16px 0 16px 20px; /* Espacio reservado para la línea lateral */
   text-align: left;
-  color: #163b55;
-  background: #fff;
-  border: 1px solid #e0e9ed;
-  border-left: 5px solid var(--verde, #1fae7a);
-  border-radius: 14px;
-  box-shadow: none;
+  background: transparent !important; /* Sin fondo */
+  border: none !important; /* Sin bordes encajonados */
+  box-shadow: none !important; /* Sin sombras cuadradas */
   cursor: pointer;
 }
 
-#area .inicio .inicio-tarjeta strong { font-size: 16px; }
+/* Indicador lateral minimalista (Línea de luz) */
+#area .inicio .inicio-tarjeta::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 15%;
+  height: 70%;
+  width: 2px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+  transition: height 0.35s cubic-bezier(0.16, 1, 0.3, 1), 
+              background 0.35s ease, 
+              box-shadow 0.35s ease,
+              top 0.35s ease;
+}
+
+/* --- TRANSICIONES Y ANIMACIONES DE LAS LETRAS --- */
+
+#area .inicio .inicio-tarjeta strong {
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: #e2e8f0;
+  display: inline-block;
+  
+  /* Transición fluida en la tipografía */
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), 
+              color 0.35s ease, 
+              letter-spacing 0.35s ease,
+              text-shadow 0.35s ease;
+}
 
 #area .inicio .inicio-tarjeta span {
   font-size: 13.5px;
   font-weight: 400;
-  line-height: 1.45;
-  color: #637785;
+  line-height: 1.5;
+  color: var(--texto-secundario, #8a99ad);
+  
+  /* Transición de deslizamiento para la descripción */
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), 
+              color 0.4s ease;
 }
 
-#area .inicio .inicio-tarjeta:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.25);
+/* --- ESTADO HOVER (INTERACCIÓN ELEGANTE) --- */
+
+#area .inicio .inicio-tarjeta:hover::before {
+  top: 0%;
+  height: 100%;
+  width: 3px;
+  background: var(--verde, #1fae7a);
+  box-shadow: 0 0 12px var(--verde, #1fae7a); /* Resplandor sutil solo en el indicador */
+}
+
+/* El título se desplaza a la derecha, se aclara y expande un poco su espaciado */
+#area .inicio .inicio-tarjeta:hover strong {
+  color: #ffffff;
+  transform: translateX(8px);
+  letter-spacing: 0.01em;
+  text-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+}
+
+/* La descripción también sigue el movimiento fluido */
+#area .inicio .inicio-tarjeta:hover span {
+  color: #cbd5e1;
+  transform: translateX(8px);
 }

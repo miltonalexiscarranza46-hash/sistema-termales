@@ -1,170 +1,384 @@
-// frontend/js/modulos/bar.js
-// Expone cargarBar(area). Pantalla del mesero: pedidos abiertos, agregar productos y cobrar.
-(function () {
-  const API_BAR = '/api/bar';
-  const API_INV = '/api/inventario';
-  const METODOS = ['efectivo', 'tarjeta', 'transferencia'];
+async function cargarBar(area) {
+  area.innerHTML = `
+    <div class="bar">
+      <p id="barMensaje" class="mensaje" role="status"></p>
 
-  // AJUSTAR: cómo guarda tu login el token (copiar de gastos.js)
-  const token = () => localStorage.getItem('token');
+      <div class="resumen">
+        <div class="resumen-item"><span>Cobrado hoy</span><strong id="barTotalHoy">$0.00</strong></div>
+        <div class="resumen-item"><span>Cuentas cobradas</span><strong id="barCuentasHoy">0</strong></div>
+        <div class="resumen-item"><span>Efectivo</span><strong id="barEfectivo">$0.00</strong></div>
+        <div class="resumen-item"><span>Tarjeta</span><strong id="barTarjeta">$0.00</strong></div>
+        <div class="resumen-item"><span>Transferencia</span><strong id="barTransferencia">$0.00</strong></div>
+      </div>
 
-  async function api(url, opciones = {}) {
-    const resp = await fetch(url, {
-      ...opciones,
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token() },
-    });
-    const datos = await resp.json().catch(() => ({}));
-    if (!resp.ok) throw new Error(datos.mensaje || 'Error ' + resp.status);
-    return datos;
-  }
+      <form id="barFormAbrir" class="bar-abrir">
+        <div class="campo">
+          <label for="barArea">Área</label>
+          <select id="barArea" class="bar-select" required></select>
+        </div>
+        <div class="campo">
+          <label for="barMesa">Mesa</label>
+          <input type="text" id="barMesa" class="bar-input" maxlength="20" required>
+        </div>
+        <button type="submit" class="bar-btn-cobrar" style="padding: 10px 20px; font-size: 0.9375rem;">Abrir pedido</button>
+      </form>
 
-  function h(tag, props = {}, ...hijos) {
-    const el = document.createElement(tag);
-    for (const [k, v] of Object.entries(props)) {
-      if (k === 'class') el.className = v;
-      else if (k.startsWith('on')) el.addEventListener(k.slice(2), v);
-      else el.setAttribute(k, v);
-    }
-    hijos.flat().filter((c) => c != null && c !== false).forEach((c) => el.append(c));
-    return el;
-  }
+      <div class="bar-tabs">
+        <button type="button" class="bar-tab bar-tab-activa" data-estado="abierto">Abiertos</button>
+        <button type="button" class="bar-tab" data-estado="cobrado">Cobrados hoy</button>
+        <button type="button" class="bar-tab" data-estado="cancelado">Cancelados hoy</button>
+      </div>
+
+      <div class="tabla-wrap">
+        <table class="tabla">
+          <thead>
+            <tr>
+              <th>Mesa</th><th>Área</th><th>Artículos</th><th>Total</th><th>Hora</th><th></th>
+            </tr>
+          </thead>
+          <tbody id="barFilas"></tbody>
+        </table>
+      </div>
+
+      <section id="barDetalle" class="bar-detalle" hidden></section>
+    </div>
+  `;
+
+  const mensaje = area.querySelector('#barMensaje');
+  const selArea = area.querySelector('#barArea');
+  const inpMesa = area.querySelector('#barMesa');
+  const tbody = area.querySelector('#barFilas');
+  const detalle = area.querySelector('#barDetalle');
+  const tabs = area.querySelectorAll('.bar-tab');
+
+  let estadoActual = 'abierto';
+  let pedidoActual = null;
+  let metodos = ['efectivo', 'tarjeta', 'transferencia'];
+  let busqueda = '';
 
   const dinero = (n) => '$' + Number(n).toFixed(2);
+  const hora = (f) =>
+    f ? new Date(f).toLocaleTimeString('es-SV', { hour: '2-digit', minute: '2-digit' }) : '—';
 
-  window.cargarBar = function (area) {
-    area.replaceChildren();
-    area.classList.add('bar-modulo');
+  function avisar(texto, esError) {
+    mensaje.textContent = texto || '';
+    mensaje.classList.toggle('mensaje-error', Boolean(esError));
+  }
 
-    const msg = h('p', { class: 'bar-msg' });
-    const panel = h('div', { class: 'bar-panel' });
-    area.append(h('h2', {}, 'Restaurante y bar'), msg, panel);
+  function el(etiqueta, clase, texto) {
+    const e = document.createElement(etiqueta);
+    if (clase) e.className = clase;
+    if (texto !== undefined) e.textContent = texto;
+    return e;
+  }
 
-    function mostrar(texto, esError) {
-      msg.textContent = texto;
-      msg.className = 'bar-msg ' + (esError ? 'bar-error' : 'bar-ok');
+  function boton(texto, clase, accion) {
+    const b = el('button', clase, texto);
+    b.type = 'button';
+    b.addEventListener('click', accion);
+    return b;
+  }
+
+  /* ---------- Datos generales ---------- */
+
+  async function cargarCatalogos() {
+    const d = await api('/bar/catalogos');
+    if (!d.ok) { avisar(d.mensaje, true); return; }
+    metodos = d.metodos_pago;
+    selArea.innerHTML = '';
+    d.areas.forEach((a) => {
+      const op = document.createElement('option');
+      op.value = a.id;
+      op.textContent = a.nombre;
+      selArea.appendChild(op);
+    });
+  }
+
+  async function cargarResumen() {
+    const d = await api('/bar/resumen');
+    if (!d.ok) { avisar(d.mensaje, true); return; }
+    const por = { efectivo: 0, tarjeta: 0, transferencia: 0 };
+    d.por_metodo.forEach((x) => { por[x.metodo_pago] = Number(x.total); });
+    area.querySelector('#barTotalHoy').textContent = dinero(d.total);
+    area.querySelector('#barCuentasHoy').textContent = d.cuentas;
+    area.querySelector('#barEfectivo').textContent = dinero(por.efectivo);
+    area.querySelector('#barTarjeta').textContent = dinero(por.tarjeta);
+    area.querySelector('#barTransferencia').textContent = dinero(por.transferencia);
+  }
+
+  async function cargarLista() {
+    const d = await api('/bar/pedidos?estado=' + estadoActual);
+    if (!d.ok) { avisar(d.mensaje, true); return; }
+
+    tbody.innerHTML = '';
+    if (d.pedidos.length === 0) {
+      const tr = el('tr');
+      const td = el('td', '', 'No hay pedidos en esta lista.');
+      td.colSpan = 6;
+      tr.appendChild(td);
+      tbody.appendChild(tr);
+      return;
     }
 
-    // ── Lista de pedidos abiertos ──
-    async function verLista() {
-      try {
-        const pedidos = await api(API_BAR + '/pedidos?estado=abierta');
-        const filas = pedidos.map((p) =>
-          h('tr', {},
-            h('td', {}, '#' + p.id),
-            h('td', {}, dinero(p.total)),
-            h('td', {}, h('button', { class: 'bar-btn', onclick: () => verDetalle(p.id) }, 'Abrir'))
-          )
+    d.pedidos.forEach((p) => {
+      const tr = el('tr');
+      if (pedidoActual === p.id) tr.classList.add('bar-fila-activa');
+      [p.mesa, p.area, p.articulos, dinero(p.total), hora(p.fecha_pago || p.fecha_hora)]
+        .forEach((v) => tr.appendChild(el('td', '', v)));
+
+      const tdAccion = el('td');
+      tdAccion.appendChild(
+        boton(estadoActual === 'abierto' ? 'Atender' : 'Ver', 'bar-btn-ver', () => abrirDetalle(p.id))
+      );
+      tr.appendChild(tdAccion);
+      tbody.appendChild(tr);
+    });
+  }
+
+  /* ---------- Detalle de un pedido ---------- */
+
+  async function abrirDetalle(id) {
+    const d = await api('/bar/pedidos/' + id);
+    if (!d.ok) { avisar(d.mensaje, true); return; }
+
+    pedidoActual = id;
+    let productos = [];
+    if (d.pedido.estado === 'abierto') {
+      const pr = await api('/bar/productos?area_id=' + d.pedido.area_id);
+      if (pr.ok) productos = pr.productos;
+    }
+    pintarDetalle(d.pedido, d.detalle, productos);
+    cargarLista();
+  }
+
+  function cerrarDetalle() {
+    pedidoActual = null;
+    busqueda = '';
+    detalle.hidden = true;
+    detalle.innerHTML = '';
+    cargarLista();
+  }
+
+  function pintarDetalle(pedido, lineas, productos) {
+    const abierto = pedido.estado === 'abierto';
+    detalle.hidden = false;
+    detalle.innerHTML = '';
+
+    // Encabezado
+    const cab = el('div', 'bar-detalle-cab');
+    cab.append(
+      el('h2', '', 'Mesa ' + pedido.mesa + ' · ' + pedido.area),
+      el('span', 'bar-estado bar-estado-' + pedido.estado, pedido.estado),
+      boton('Cerrar', 'bar-btn-cerrar', cerrarDetalle)
+    );
+    detalle.appendChild(cab);
+
+    // Líneas del pedido
+    const wrap = el('div', 'tabla-wrap');
+    const tabla = el('table', 'tabla');
+    tabla.innerHTML =
+      '<thead><tr><th>Producto</th><th>Precio</th><th>Cantidad</th><th>Subtotal</th><th></th></tr></thead>';
+    const tb = el('tbody');
+
+    if (lineas.length === 0) {
+      const tr = el('tr');
+      const td = el('td', '', 'Aún no hay productos en este pedido.');
+      td.colSpan = 5;
+      tr.appendChild(td);
+      tb.appendChild(tr);
+    }
+
+    lineas.forEach((l) => {
+      const tr = el('tr');
+      tr.appendChild(el('td', '', l.producto));
+      tr.appendChild(el('td', '', dinero(l.precio_unitario)));
+
+      const tdCant = el('td', 'bar-cant');
+      if (abierto) {
+        tdCant.append(
+          boton('−', 'bar-btn-cant', () => cambiar(l.producto_id, l.cantidad - 1)),
+          el('span', 'bar-cant-num', l.cantidad),
+          boton('+', 'bar-btn-cant', () => agregar(l.producto_id))
         );
-        panel.replaceChildren(
-          h('button', { class: 'bar-btn bar-principal', onclick: nuevoPedido }, 'Nuevo pedido'),
-          h('h3', {}, 'Pedidos abiertos'),
-          filas.length
-            ? h('table', { class: 'bar-table' },
-                h('thead', {}, h('tr', {}, ['Pedido', 'Total', ''].map((t) => h('th', {}, t)))),
-                h('tbody', {}, filas))
-            : h('p', {}, 'No tienes pedidos abiertos.')
-        );
-      } catch (e) {
-        mostrar(e.message, true);
+      } else {
+        tdCant.textContent = l.cantidad;
       }
-    }
+      tr.appendChild(tdCant);
 
-    async function nuevoPedido() {
-      try {
-        const p = await api(API_BAR + '/pedidos', { method: 'POST', body: '{}' });
-        mostrar('Pedido #' + p.id + ' abierto', false);
-        verDetalle(p.id);
-      } catch (e) {
-        mostrar(e.message, true);
+      tr.appendChild(el('td', '', dinero(l.subtotal)));
+
+      const tdQuitar = el('td');
+      if (abierto) {
+        tdQuitar.appendChild(boton('Quitar', 'bar-btn-quitar', () => cambiar(l.producto_id, 0)));
       }
+      tr.appendChild(tdQuitar);
+      tb.appendChild(tr);
+    });
+
+    tabla.appendChild(tb);
+    wrap.appendChild(tabla);
+    detalle.appendChild(wrap);
+    detalle.appendChild(el('p', 'bar-total', 'Total: ' + dinero(pedido.total)));
+
+    if (!abierto) {
+      const nota =
+        pedido.estado === 'cobrado'
+          ? 'Cobrado con ' + pedido.metodo_pago + ' a las ' + hora(pedido.fecha_pago) + '.'
+          : 'Pedido cancelado: no se cobró ni se descontó inventario.';
+      detalle.appendChild(el('p', 'bar-nota', nota));
+      return;
     }
 
-    // ── Detalle de un pedido ──
-    async function verDetalle(id) {
-      try {
-        const [pedido, productos] = await Promise.all([
-          api(API_BAR + '/pedidos/' + id),
-          api(API_INV + '/productos'),
-        ]);
+    // Agregar productos
+    const sec = el('div', 'bar-productos');
+    sec.appendChild(el('h3', '', 'Agregar productos'));
 
-        const filas = pedido.items.map((it) =>
-          h('tr', {},
-            h('td', {}, it.nombre),
-            h('td', {}, String(it.cantidad)),
-            h('td', {}, dinero(it.precio_unitario)),
-            h('td', {}, dinero(it.subtotal)),
-            h('td', {}, h('button', { class: 'bar-btn', onclick: () => quitar(id, it.id) }, 'Quitar'))
-          )
-        );
+    const buscar = el('input', 'bar-input'); // Asegurar clase input
+    buscar.type = 'search';
+    buscar.placeholder = 'Buscar producto...';
+    buscar.value = busqueda;
+    buscar.style.marginBottom = '14px';
 
-        // Agregar producto
-        const selProd = h('select', { required: '' },
-          ...productos.map((p) =>
-            h('option', { value: String(p.id) }, `${p.nombre} — ${dinero(p.precio)} (stock ${p.stock})`)));
-        const inCant = h('input', { type: 'number', min: '1', step: '1', value: '1', required: '' });
-        const formAgregar = h('form', { class: 'bar-form' }, selProd, inCant,
-          h('button', { type: 'submit', class: 'bar-btn' }, 'Agregar'));
-        formAgregar.addEventListener('submit', async (ev) => {
-          ev.preventDefault();
-          try {
-            await api(API_BAR + '/pedidos/' + id + '/items', {
-              method: 'POST',
-              body: JSON.stringify({ producto_id: Number(selProd.value), cantidad: Number(inCant.value) }),
-            });
-            mostrar('', false);
-            verDetalle(id);
-          } catch (e) {
-            mostrar(e.message, true);
-          }
+    const grid = el('div', 'bar-grid');
+
+    function pintarProductos() {
+      const q = busqueda.trim().toLowerCase();
+      grid.innerHTML = '';
+      productos
+        .filter((p) => p.nombre.toLowerCase().includes(q))
+        .forEach((p) => {
+          const b = boton('', 'bar-producto', () => agregar(p.id));
+          b.append(
+            el('strong', '', p.nombre),
+            el('span', '', dinero(p.precio)),
+            el('small', '', p.existencias > 0 ? 'Quedan ' + p.existencias : 'Agotado')
+          );
+          if (p.existencias < 1) b.disabled = true;
+          grid.appendChild(b);
         });
-
-        // Cobrar
-        const selPago = h('select', {}, ...METODOS.map((m) => h('option', { value: m }, m)));
-        const btnCobrar = h('button', { class: 'bar-btn bar-principal', onclick: () => cobrar(id, selPago.value) },
-          'Cobrar ' + dinero(pedido.total));
-
-        panel.replaceChildren(
-          h('button', { class: 'bar-btn', onclick: verLista }, '← Volver'),
-          h('h3', {}, 'Pedido #' + id),
-          filas.length
-            ? h('table', { class: 'bar-table' },
-                h('thead', {}, h('tr', {}, ['Producto', 'Cant.', 'Precio', 'Subtotal', ''].map((t) => h('th', {}, t)))),
-                h('tbody', {}, filas))
-            : h('p', {}, 'Aún no hay productos.'),
-          h('p', { class: 'bar-total' }, 'Total: ' + dinero(pedido.total)),
-          h('h4', {}, 'Agregar producto'),
-          formAgregar,
-          h('h4', {}, 'Cobro'),
-          h('div', { class: 'bar-form' }, selPago, btnCobrar)
-        );
-      } catch (e) {
-        mostrar(e.message, true);
-      }
+      if (!grid.children.length) grid.appendChild(el('p', '', 'No hay productos que coincidan.'));
     }
 
-    async function quitar(pedidoId, itemId) {
-      try {
-        await api(API_BAR + '/pedidos/' + pedidoId + '/items/' + itemId, { method: 'DELETE' });
-        verDetalle(pedidoId);
-      } catch (e) {
-        mostrar(e.message, true);
-      }
+    buscar.addEventListener('input', () => {
+      busqueda = buscar.value;
+      pintarProductos();
+    });
+    pintarProductos();
+    sec.append(buscar, grid);
+    detalle.appendChild(sec);
+
+    // Cobro y cancelación
+    const cobro = el('div', 'bar-cobro');
+    const selMetodo = el('select', '', '');
+    selMetodo.className = 'bar-select'; // Asegurar clase select
+    metodos.forEach((m) => {
+      const op = document.createElement('option');
+      op.value = m;
+      op.textContent = m.charAt(0).toUpperCase() + m.slice(1);
+      selMetodo.appendChild(op);
+    });
+
+    const btnCobrar = boton('Cobrar ' + dinero(pedido.total), 'bar-btn-cobrar', () =>
+      cobrar(btnCobrar, selMetodo.value, pedido.total)
+    );
+    btnCobrar.disabled = lineas.length === 0;
+
+    cobro.append(
+      el('label', '', 'Método de pago'),
+      selMetodo,
+      btnCobrar,
+      boton('Cancelar pedido', 'bar-btn-cancelar', cancelar)
+    );
+    detalle.appendChild(cobro);
+  }
+
+  /* ---------- Acciones ---------- */
+
+  async function agregar(productoId) {
+    avisar('');
+    const d = await api('/bar/pedidos/' + pedidoActual + '/items', {
+      method: 'POST',
+      body: JSON.stringify({ producto_id: productoId, cantidad: 1 }),
+    });
+    if (!d.ok) { avisar(d.mensaje, true); return; }
+    abrirDetalle(pedidoActual);
+  }
+
+  async function cambiar(productoId, cantidad) {
+    avisar('');
+    const d = await api('/bar/pedidos/' + pedidoActual + '/items/' + productoId, {
+      method: 'PATCH',
+      body: JSON.stringify({ cantidad }),
+    });
+    if (!d.ok) { avisar(d.mensaje, true); return; }
+    abrirDetalle(pedidoActual);
+  }
+
+  async function cobrar(btn, metodo, total) {
+    if (!confirm('¿Cobrar ' + dinero(total) + ' con ' + metodo + '?')) return;
+    avisar('');
+    btn.disabled = true;
+
+    const d = await api('/bar/pedidos/' + pedidoActual + '/cobrar', {
+      method: 'POST',
+      body: JSON.stringify({ metodo_pago: metodo }),
+    });
+    if (!d.ok) {
+      avisar(d.mensaje, true);
+      btn.disabled = false;
+      return;
     }
 
-    async function cobrar(pedidoId, metodo) {
-      if (!window.confirm('¿Cobrar el pedido #' + pedidoId + ' con ' + metodo + '?')) return;
-      try {
-        await api(API_BAR + '/pedidos/' + pedidoId + '/cobrar', {
-          method: 'POST',
-          body: JSON.stringify({ metodo_pago: metodo }),
-        });
-        mostrar('Pedido #' + pedidoId + ' cobrado', false);
-        verLista();
-      } catch (e) {
-        mostrar(e.message, true); // aquí aparece el 409 de stock insuficiente
-      }
-    }
+    avisar('Cuenta cobrada: ' + dinero(d.pedido.total) + ' (' + d.pedido.metodo_pago + ').');
+    await abrirDetalle(pedidoActual);
+    cargarResumen();
+  }
 
-    verLista();
-  };
-})();
+  async function cancelar() {
+    if (!confirm('¿Cancelar este pedido? No se cobrará ni se descontará inventario.')) return;
+    avisar('');
+    const d = await api('/bar/pedidos/' + pedidoActual + '/cancelar', { method: 'POST' });
+    if (!d.ok) { avisar(d.mensaje, true); return; }
+    avisar('Pedido cancelado.');
+    cerrarDetalle();
+  }
+
+  /* ---------- Eventos ---------- */
+
+  function marcarTab() {
+    tabs.forEach((t) => t.classList.toggle('bar-tab-activa', t.dataset.estado === estadoActual));
+  }
+
+  tabs.forEach((t) =>
+    t.addEventListener('click', () => {
+      estadoActual = t.dataset.estado;
+      marcarTab();
+      cerrarDetalle();
+    })
+  );
+
+  area.querySelector('#barFormAbrir').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    avisar('');
+
+    const d = await api('/bar/pedidos', {
+      method: 'POST',
+      body: JSON.stringify({ area_id: Number(selArea.value), mesa: inpMesa.value }),
+    });
+    if (!d.ok) { avisar(d.mensaje, true); return; }
+
+    inpMesa.value = '';
+    estadoActual = 'abierto';
+    marcarTab();
+    await abrirDetalle(d.pedido.id);
+    avisar('Pedido abierto en la mesa ' + d.pedido.mesa + '.');
+  });
+
+  try {
+    await cargarCatalogos();
+    await cargarResumen();
+    await cargarLista();
+  } catch (e) {
+    avisar('Error: ' + e.message, true);
+  }
+}

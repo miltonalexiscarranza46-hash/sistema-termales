@@ -1,0 +1,177 @@
+/* ==========================================
+   MÓDULO DE INVENTARIO (DARK & ELEGANT)
+========================================== */
+
+.inv-modulo {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  color: #ffffff;
+}
+
+.inv-titulo {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+/* Tabla de inventario */
+.inv-tabla-wrap {
+  overflow-x: auto;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+}
+
+.inv-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+  text-align: left;
+}
+
+.inv-table th {
+  background-color: rgba(15, 23, 42, 0.6);
+  padding: 14px 16px;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.inv-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.inv-table tbody tr:hover {
+  background-color: rgba(255, 255, 255, 0.04);
+}
+
+/* Fila de stock bajo corregida */
+.inv-table tr.inv-bajo td {
+  background-color: rgba(163, 52, 43, 0.2) !important;
+  color: #fca5a5 !important;
+  font-weight: 600;
+}
+
+.inv-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  background-color: rgba(163, 52, 43, 0.4);
+  border: 1px solid rgba(248, 113, 113, 0.4);
+  color: #fca5a5;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+/* Grid de formularios de abajo */
+.inv-bloques {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+/* Tarjetas de formulario */
+.inv-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+}
+
+.inv-form h3 {
+  margin: 0 0 4px 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.inv-grupo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.inv-grupo label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #cbd5e1;
+}
+
+/* Estilo oscuro para todos los inputs y selects */
+.inv-input {
+  width: 100%;
+  padding: 11px 14px;
+  background-color: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  color: #ffffff;
+  font-size: 0.9375rem;
+  transition: all 0.25s ease;
+}
+
+.inv-input::placeholder {
+  color: #64748b;
+}
+
+.inv-input:hover {
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.inv-input:focus {
+  outline: none;
+  border-color: #20ad80;
+  box-shadow: 0 0 0 3px rgba(32, 173, 128, 0.25);
+  background-color: rgba(15, 23, 42, 0.9);
+}
+
+/* Botones de acción */
+.inv-btn {
+  padding: 12px 20px;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: #ffffff;
+  background-color: #20ad80;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(32, 173, 128, 0.35);
+  transition: all 0.25s ease;
+  margin-top: 6px;
+}
+
+.inv-btn:hover {
+  background-color: #19936c;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(32, 173, 128, 0.45);
+}
+
+.inv-btn:active {
+  transform: translateY(0) scale(0.98);
+}
+
+/* Mensajes de aviso */
+.inv-msg {
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.inv-ok { color: #34d399; }
+.inv-error { color: #f87171; }

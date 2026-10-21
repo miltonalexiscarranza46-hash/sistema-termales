@@ -1,0 +1,454 @@
+/* ==========================================
+   MÓDULO RESTAURANT / BAR (DARK GLASSMOURPHISM DEFINITIVO)
+========================================== */
+
+:root {
+  --bar-primary: #ffffff;
+  --bar-primary-hover: #e2e8f0;
+  --bar-success: #20ad80;
+  --bar-success-hover: #19936c;
+  --bar-success-bg: rgba(32, 173, 128, 0.18);
+  --bar-success-subtle: rgba(32, 173, 128, 0.12);
+  --bar-success-border: rgba(32, 173, 128, 0.35);
+  --bar-danger: #f87171;
+  --bar-danger-bg: rgba(163, 52, 43, 0.25);
+  --bar-danger-border: rgba(248, 113, 113, 0.4);
+  --bar-warning: #fcd34d;
+  --bar-warning-bg: rgba(138, 90, 0, 0.25);
+  --bar-text-muted: #94a3b8;
+  --bar-border: rgba(255, 255, 255, 0.08);
+  --bar-border-light: rgba(255, 255, 255, 0.15);
+  --bar-bg-card: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+
+  --bar-radius-sm: 8px;
+  --bar-radius-md: 12px;
+  --bar-radius-lg: 18px;
+  --bar-transition: 250ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Base del módulo */
+.bar {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  color: #ffffff;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  animation: barFadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* ------------------------------------------
+   TARJETAS DE RESUMEN
+------------------------------------------ */
+.resumen {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+}
+
+.resumen-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 18px 20px;
+  background: var(--bar-bg-card);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--bar-border);
+  border-top: 1px solid var(--bar-border-light);
+  border-radius: var(--bar-radius-md);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  transition: transform var(--bar-transition), border-color var(--bar-transition);
+
+  &:hover {
+    transform: translateY(-3px);
+    border-color: rgba(32, 173, 128, 0.4);
+  }
+
+  & span {
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--bar-text-muted);
+  }
+
+  & strong {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #ffffff;
+  }
+}
+
+/* ------------------------------------------
+   FORMULARIO DE APERTURA
+------------------------------------------ */
+.bar-abrir {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) auto;
+  gap: 16px;
+  align-items: end;
+  padding: 22px 24px;
+  background: var(--bar-bg-card);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--bar-border);
+  border-top: 1px solid var(--bar-border-light);
+  border-radius: var(--bar-radius-lg);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+
+  & .campo label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #cbd5e1;
+  }
+}
+
+/* Inputs y Selects globales dentro de Bar */
+.bar input,
+.bar select,
+.bar-input {
+  width: 100%;
+  padding: 11px 14px;
+  background-color: rgba(15, 23, 42, 0.75) !important;
+  border: 1px solid var(--bar-border-light) !important;
+  border-radius: var(--bar-radius-sm);
+  color: #ffffff !important;
+  font-size: 0.9375rem;
+  transition: all var(--bar-transition);
+
+  &:hover {
+    border-color: rgba(255, 255, 255, 0.3) !important;
+  }
+
+  &:focus {
+    outline: none !important;
+    border-color: var(--bar-success) !important;
+    box-shadow: 0 0 0 3px rgba(32, 173, 128, 0.25) !important;
+  }
+}
+
+.bar input::placeholder {
+  color: #64748b !important;
+}
+
+/* ------------------------------------------
+   PESTAÑAS / TABS
+------------------------------------------ */
+.bar-tabs {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+
+  & .bar-tab {
+    padding: 10px 20px;
+    background: rgba(15, 23, 42, 0.6);
+    color: #cbd5e1;
+    border: 1px solid var(--bar-border-light);
+    border-radius: var(--bar-radius-sm);
+    font-weight: 600;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all var(--bar-transition);
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: #ffffff;
+      transform: translateY(-2px);
+    }
+
+    &.bar-tab-activa {
+      background-color: var(--bar-success);
+      color: #ffffff;
+      border-color: transparent;
+      box-shadow: 0 4px 14px rgba(32, 173, 128, 0.35);
+    }
+  }
+}
+
+/* ------------------------------------------
+   TABLAS Y FILAS ACTIVAS
+------------------------------------------ */
+.bar .tabla-wrap {
+  overflow-x: auto;
+  background: var(--bar-bg-card);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--bar-border);
+  border-radius: var(--bar-radius-md);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+}
+
+.bar table,
+.bar .tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+  color: #ffffff;
+
+  & th {
+    background-color: rgba(15, 23, 42, 0.6);
+    padding: 14px 16px;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid var(--bar-border);
+  }
+
+  & td {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--bar-border);
+  }
+}
+
+/* Fila activa elegida */
+.bar-fila-activa td {
+  background-color: var(--bar-success-bg) !important;
+  color: #ffffff !important;
+}
+
+/* ------------------------------------------
+   DETALLE DEL PEDIDO (TARJETA PRINCIPAL ABAJO)
+------------------------------------------ */
+.bar-detalle {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 28px;
+  background: var(--bar-bg-card) !important;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--bar-border) !important;
+  border-top: 1px solid var(--bar-border-light) !important;
+  border-radius: var(--bar-radius-lg);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.3);
+
+  &[hidden] {
+    display: none !important;
+  }
+}
+
+.bar-detalle-cab h2 {
+  margin: 0 auto 0 0;
+  color: #ffffff !important;
+  font-size: 1.35rem;
+  font-weight: 800;
+}
+
+/* Badges de Estado */
+.bar-estado {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 14px;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+
+  &-abierto {
+    background-color: var(--bar-warning-bg);
+    color: var(--bar-warning);
+    border: 1px solid rgba(252, 211, 77, 0.3);
+  }
+
+  &-cobrado {
+    background-color: var(--bar-success-bg);
+    color: #34d399;
+    border: 1px solid var(--bar-success-border);
+  }
+
+  &-cancelado {
+    background-color: var(--bar-danger-bg);
+    color: var(--bar-danger);
+    border: 1px solid var(--bar-danger-border);
+  }
+}
+
+/* Total del detalle */
+.bar-total {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: #34d399 !important; /* Verde brillante altamente visible */
+  text-align: right;
+  letter-spacing: -0.02em;
+}
+
+.bar-nota {
+  color: var(--bar-text-muted);
+  font-size: 0.875rem;
+}
+
+/* ------------------------------------------
+   CATÁLOGO Y GRID POS DE PRODUCTOS
+------------------------------------------ */
+.bar-productos h3 {
+  color: #ffffff !important;
+  margin: 0 0 16px 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.bar-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(165px, 1fr));
+  gap: 14px;
+}
+
+.bar-producto {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 16px;
+  color: #ffffff !important;
+  background-color: var(--bar-success-subtle) !important;
+  border: 1px solid var(--bar-success-border) !important;
+  border-radius: var(--bar-radius-md);
+  font-weight: 700;
+  font-size: 0.9375rem;
+  cursor: pointer;
+  transition: all var(--bar-transition);
+
+  &:hover:not(:disabled) {
+    background-color: rgba(32, 173, 128, 0.25) !important;
+    border-color: var(--bar-success) !important;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0) scale(0.97);
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    background-color: rgba(15, 23, 42, 0.4) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+    color: #64748b !important;
+  }
+
+  & small {
+    color: #a7f3d0 !important;
+    font-weight: 500;
+    font-size: 0.8125rem;
+  }
+}
+
+/* ------------------------------------------
+   SECCIÓN DE COBRO Y BOTONES
+------------------------------------------ */
+.bar-cobro {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  align-items: center;
+  justify-content: flex-end;
+  padding-top: 22px;
+  border-top: 1px solid var(--bar-border);
+
+  & label {
+    color: #cbd5e1 !important;
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+}
+
+/* Botones varios */
+.bar-btn-ver,
+.bar-btn-cerrar {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+  color: #ffffff !important;
+  border: 1px solid var(--bar-border-light) !important;
+  border-radius: var(--bar-radius-sm);
+  padding: 8px 18px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--bar-transition);
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.18) !important;
+    transform: translateY(-1px);
+  }
+}
+
+.bar-btn-cobrar {
+  font-size: 1rem;
+  font-weight: 700;
+  padding: 12px 28px;
+  background-color: var(--bar-success) !important;
+  color: #ffffff !important;
+  border: none;
+  border-radius: var(--bar-radius-sm);
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(32, 173, 128, 0.35);
+  transition: all var(--bar-transition);
+
+  &:hover:not(:disabled) {
+    background-color: var(--bar-success-hover) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(32, 173, 128, 0.45);
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+}
+
+.bar-btn-quitar,
+.bar-btn-cancelar {
+  color: var(--bar-danger) !important;
+  background-color: var(--bar-danger-bg) !important;
+  border: 1px solid var(--bar-danger-border) !important;
+  border-radius: var(--bar-radius-sm);
+  padding: 8px 16px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--bar-transition);
+
+  &:hover {
+    background-color: rgba(163, 52, 43, 0.4) !important;
+    color: #ffffff !important;
+  }
+}
+
+.bar-cant-num {
+  min-width: 32px;
+  text-align: center;
+  font-weight: 800;
+  font-size: 1rem;
+  color: #ffffff !important;
+}
+
+.bar-btn-cant {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(255, 255, 255, 0.08) !important;
+  color: #ffffff !important;
+  border: 1px solid var(--bar-border-light) !important;
+  border-radius: var(--bar-radius-sm);
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+
+  &:hover {
+    background-color: var(--bar-success) !important;
+    border-color: var(--bar-success) !important;
+  }
+}
+
+@keyframes barFadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}

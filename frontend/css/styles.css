@@ -1102,3 +1102,106 @@ body {
 .layout .contenido > .contenedor {
     background: transparent !important;
 }
+
+
+/* =========================================
+   MENÚ LATERAL FIJO A LA IZQUIERDA
+   Termales Santa Teresa
+========================================= */
+
+:root {
+  --menu-ancho: 260px;
+  --menu-franja: 18px;
+}
+
+/* Menú situado al lado izquierdo */
+.layout .menu {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: auto;
+  bottom: 0;
+
+  width: var(--menu-ancho);
+  height: 100vh;
+  height: 100dvh;
+
+  z-index: 1001;
+
+  transform: translateX(
+    calc(-1 * (var(--menu-ancho) - var(--menu-franja)))
+  );
+
+  transition: transform 350ms
+    cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Mostrar el menú al pasar el cursor, enfocarlo o abrirlo */
+.layout .menu:hover,
+.layout .menu:focus-within,
+.layout.menu-abierto .menu {
+  transform: translateX(0);
+}
+
+/* Contenido principal */
+.layout .contenido {
+  width: auto;
+  min-width: 0;
+  margin-left: var(--menu-franja);
+  margin-right: 0;
+
+  transition: margin-left 350ms
+    cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Reservar espacio cuando el menú esté abierto */
+.layout:has(.menu:hover) .contenido,
+.layout:has(.menu:focus-within) .contenido,
+.layout.menu-abierto .contenido {
+  margin-left: var(--menu-ancho);
+  margin-right: 0;
+}
+
+/* Botón para mostrar el menú en el borde izquierdo */
+.menu-trigger {
+  left: var(--menu-franja);
+  right: auto;
+  z-index: 1002;
+}
+
+.layout.menu-abierto .menu-trigger {
+  left: var(--menu-ancho);
+}
+
+/* Adaptación a móviles */
+@media (max-width: 760px) {
+  .layout .menu {
+    left: 0;
+    right: auto;
+    width: min(290px, 85vw);
+    transform: translateX(-100%);
+  }
+
+  .layout .menu:hover,
+  .layout .menu:focus-within,
+  .layout.menu-abierto .menu {
+    transform: translateX(0);
+  }
+
+  .layout .contenido,
+  .layout:has(.menu:hover) .contenido,
+  .layout:has(.menu:focus-within) .contenido,
+  .layout.menu-abierto .contenido {
+    width: 100%;
+    margin-left: 0;
+    margin-right: 0;
+    padding: 20px 16px;
+  }
+
+  .menu-trigger,
+  .layout.menu-abierto .menu-trigger {
+    top: 14px;
+    left: auto;
+    right: 14px;
+  }
+}

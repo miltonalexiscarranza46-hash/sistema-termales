@@ -1,59 +1,125 @@
 /* ==========================================
-   MÓDULO: REPORTES (EMPLEADOS Y ADMINISTRADOR)
+   MÓDULO: REPORTES (DARK MODE & GLASSMORPHISM)
 ========================================== */
 
-.reporte { display: flex; flex-direction: column; gap: 20px; }
+.reporte { 
+  display: flex; 
+  flex-direction: column; 
+  gap: 24px; 
+  color: #ffffff;
+  animation: reporteFadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
 
-/* El atributo hidden debe ganar a los display de abajo */
+/* El atributo hidden debe ganar siempre */
 .reporte [hidden] { display: none !important; }
 
 .reporte-fecha {
   margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
   text-transform: capitalize;
-  color: var(--texto-secundario, #b7c9d8);
+  color: var(--texto-secundario, #94a3b8);
+  letter-spacing: 0.02em;
 }
 
-.reporte-titulo { margin: 0 0 -8px; font-size: 1.05rem; }
+.reporte-titulo { 
+  margin: 0 0 -8px; 
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.01em;
+}
 
 .reporte-nota {
   margin: 0;
-  line-height: 1.5;
-  color: var(--texto-secundario, #b7c9d8);
+  line-height: 1.6;
+  font-size: 0.9375rem;
+  color: var(--texto-secundario, #cbd5e1);
 }
 
-/* Aviso de estado */
+/* Avisos de estado */
 .reporte-estado {
-  padding: 14px 18px;
-  border: 1px solid;
-  border-radius: 12px;
+  padding: 16px 20px;
+  border-radius: 14px;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
 }
-.reporte-estado.pendiente { color: #8a5412; background: #fdf0dc; border-color: #f3d9ad; }
-.reporte-estado.enviado   { color: #1f4f66; background: #e8f3f8; border-color: #c3dde9; }
-.reporte-estado.leido     { color: #1f6b41; background: #e2f4ea; border-color: #b9e1c9; }
 
-/* Formulario */
+.reporte-estado.pendiente { 
+  color: #fcd34d; 
+  background: rgba(138, 84, 18, 0.2); 
+  border: 1px solid rgba(245, 158, 11, 0.4); 
+}
+
+.reporte-estado.enviado { 
+  color: #38bdf8; 
+  background: rgba(31, 79, 102, 0.25); 
+  border: 1px solid rgba(56, 189, 248, 0.4); 
+}
+
+.reporte-estado.leido { 
+  color: #34d399; 
+  background: rgba(32, 173, 128, 0.2); 
+  border: 1px solid rgba(52, 211, 153, 0.4); 
+}
+
+/* Formulario de envío */
 .reporte-form {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  padding: 20px;
-  background: #fff;
-  border: 1px solid #e0e9ed;
-  border-radius: 14px;
+  gap: 16px;
+  padding: 24px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
 }
 
 .reporte-form textarea {
   width: 100%;
-  padding: 12px 14px;
+  padding: 14px 16px;
   font: inherit;
-  color: #2f3b40;
+  color: #ffffff;
+  background-color: rgba(15, 23, 42, 0.7);
   resize: vertical;
-  border: 1px solid #cfdde4;
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 10px;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  transition: all 0.25s ease;
 }
 
-.reporte-form small { align-self: flex-end; color: #637785; }
-.reporte-form button { align-self: flex-start; }
+.reporte-form textarea::placeholder {
+  color: #64748b;
+}
+
+.reporte-form textarea:hover {
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.reporte-form textarea:focus {
+  outline: none;
+  border-color: var(--bar-success, #20ad80);
+  box-shadow: 0 0 0 3px rgba(32, 173, 128, 0.25);
+  background-color: rgba(15, 23, 42, 0.9);
+}
+
+.reporte-form small { 
+  align-self: flex-end; 
+  color: var(--texto-secundario, #94a3b8);
+  font-weight: 500;
+  font-size: 0.8125rem;
+}
+
+.reporte-form button { 
+  align-self: flex-start; 
+}
 
 
 /* ---------- Reportes recibidos (administrador) ---------- */
@@ -66,58 +132,132 @@
 }
 
 .reporte-badge {
-  display: inline-block;
-  padding: 3px 10px;
-  font-size: 0.85rem;
-  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  font-size: 0.8rem;
+  font-weight: 700;
   border-radius: 999px;
+  letter-spacing: 0.02em;
 }
-.reporte-badge.sin-leer { color: #8a5412; background: #fdf0dc; }
-.reporte-badge.leido    { color: #1f6b41; background: #e2f4ea; }
 
-.reporte-faltan { display: flex; flex-wrap: wrap; gap: 8px; }
+.reporte-badge.sin-leer { 
+  color: #fcd34d; 
+  background: rgba(138, 84, 18, 0.3); 
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.reporte-badge.leido { 
+  color: #34d399; 
+  background: rgba(32, 173, 128, 0.25); 
+  border: 1px solid rgba(52, 211, 153, 0.3);
+}
+
+.reporte-faltan { 
+  display: flex; 
+  flex-wrap: wrap; 
+  gap: 10px; 
+}
 
 .reporte-chip {
-  padding: 6px 12px;
-  font-size: 0.9rem;
-  color: #8a5412;
-  background: #fdf0dc;
-  border: 1px solid #f3d9ad;
+  padding: 6px 14px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #fcd34d;
+  background: rgba(138, 84, 18, 0.25);
+  border: 1px solid rgba(245, 158, 11, 0.3);
   border-radius: 999px;
+  transition: transform 0.2s ease;
+}
+
+.reporte-chip:hover {
+  transform: translateY(-1px);
 }
 
 /* Detalle de un reporte */
 .reporte-detalle {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  padding: 20px;
-  color: #2f3b40;
-  background: #fff;
-  border: 1px solid #e0e9ed;
-  border-radius: 14px;
+  gap: 16px;
+  padding: 24px;
+  color: #ffffff;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
 }
-.reporte-detalle h3 { margin: 0; color: #163b55; }
-.reporte-detalle .reporte-subtitulo { margin: 0 0 -6px; color: #163b55; }
-.reporte-detalle .reporte-meta { margin: 0; font-size: 0.92rem; color: #637785; }
+
+.reporte-detalle h3 { 
+  margin: 0; 
+  color: #ffffff; 
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.reporte-detalle .reporte-subtitulo { 
+  margin: 0 0 -6px; 
+  color: #38bdf8; 
+  font-weight: 600;
+}
+
+.reporte-detalle .reporte-meta { 
+  margin: 0; 
+  font-size: 0.875rem; 
+  color: var(--texto-secundario, #94a3b8); 
+}
+
 .reporte-detalle .reporte-obs {
   margin: 0;
-  padding: 12px 14px;
-  line-height: 1.5;
+  padding: 16px 18px;
+  line-height: 1.6;
+  font-size: 0.9375rem;
+  color: #e2e8f0;
   white-space: pre-wrap;
-  background: #f3f8f8;
-  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
 }
-.reporte-detalle-botones { display: flex; flex-wrap: wrap; gap: 10px; }
+
+.reporte-detalle-botones { 
+  display: flex; 
+  flex-wrap: wrap; 
+  gap: 12px; 
+  margin-top: 6px;
+}
 
 /* Botón secundario (Ver, Cerrar) */
 #area .reporte .btn-secundario {
-  padding: 6px 14px;
-  color: #1f4f66;
-  background: #fff;
-  border: 1px solid #c3dde9;
+  padding: 8px 18px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.25s ease;
 }
+
 #area .reporte .btn-secundario:hover {
-  background: #e8f3f8;
-  transform: none;
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+#area .reporte .btn-secundario:active {
+  transform: translateY(0) scale(0.97);
+}
+
+@keyframes reporteFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

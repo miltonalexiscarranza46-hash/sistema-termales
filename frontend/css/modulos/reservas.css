@@ -1,53 +1,139 @@
 /* ==========================================
-   MÓDULO: RESERVAS DE CABAÑAS (BASE)
+   MÓDULO: RESERVAS DE CABAÑAS (MODERNO & ELEGANTE)
 ========================================== */
 
-.reservas { display: flex; flex-direction: column; gap: 22px; }
+.reservas { 
+  display: flex; 
+  flex-direction: column; 
+  gap: 28px; 
+  animation: reservasAparecerGlobal 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
 
-/* Reservas canceladas en gris */
-.fila-cancelada td { color: #9aa9b4; }
+/* --- CONTENEDOR Y TABLA PREMIUM --- */
 
-/* Etiquetas de estado */
-.estado {
-  display: inline-block;
-  padding: 3px 10px;
+.reservas .tabla-wrap,
+.reservas-tabla-wrap {
+  overflow-x: auto;
+  background: linear-gradient(135deg, rgba(20, 39, 64, 0.85) 0%, rgba(10, 24, 42, 0.9) 100%);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(126, 183, 231, 0.18);
+  border-radius: 18px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25);
+}
+
+.reservas table,
+.reservas-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+  text-align: left;
+  color: #edf6ff;
+
+  & th {
+    background: rgba(14, 33, 56, 0.9);
+    padding: 16px 20px;
+    font-weight: 700;
+    color: #93bde3;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.06em;
+    border-bottom: 1px solid rgba(126, 183, 231, 0.15);
+  }
+
+  & td {
+    padding: 16px 20px;
+    border-bottom: 1px solid rgba(126, 183, 231, 0.08);
+    transition: background-color 0.2s ease;
+  }
+
+  & tbody tr {
+    transition: background-color 0.25s ease, transform 0.2s ease;
+
+    &:hover td {
+      background-color: rgba(52, 142, 232, 0.08);
+    }
+  }
+
+  & tr:last-child td {
+    border-bottom: none;
+  }
+}
+
+/* Reservas canceladas con estilo translúcido tenue y elegante */
+.reservas .fila-cancelada td { 
+  color: #7b93a8 !important;
+  background: rgba(255, 105, 105, 0.03);
+  text-decoration: line-through;
+  text-decoration-color: rgba(255, 153, 153, 0.4);
+}
+
+/* --- ETIQUETAS DE ESTADO REFINADAS --- */
+
+.reservas .estado {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 14px;
   border-radius: 999px;
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 700;
-  text-transform: capitalize;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
-.estado-pendiente {
-  background: rgba(255, 190, 65, 0.14);
-  color: #ffd477;
-  border: 1px solid rgba(255, 190, 65, 0.28);
+.reservas .estado-pendiente {
+  background: rgba(255, 190, 65, 0.15);
+  color: #ffe194;
+  border: 1px solid rgba(255, 190, 65, 0.35);
 }
 
-.estado-pagada {
-  background: rgba(33, 214, 160, 0.13);
-  color: #54e7b7;
-  border: 1px solid rgba(33, 214, 160, 0.28);
+.reservas .estado-pagada {
+  background: rgba(33, 214, 160, 0.15);
+  color: #6fecc4;
+  border: 1px solid rgba(33, 214, 160, 0.35);
 }
 
-.estado-cancelada {
-  background: rgba(255, 105, 105, 0.12);
-  color: #ff9999;
-  border: 1px solid rgba(255, 105, 105, 0.25);
+.reservas .estado-cancelada {
+  background: rgba(255, 105, 105, 0.15);
+  color: #ffb3b3;
+  border: 1px solid rgba(255, 105, 105, 0.3);
 }
 
-/* Botón cancelar (sobrescribe el verde de #area button) */
+/* --- BOTÓN CANCELAR MODERNO (ELIMINANDO EL BLANCO PLANO) --- */
+
+#area .reservas .btn-cancelar,
 #area .btn-cancelar {
-  color: #a3342b;
-  background: #fff;
-  border: 1px solid #f0c3bf;
-  padding: 6px 12px;
-}
-#area .btn-cancelar:hover {
-  background: #fde7e5;
-  transform: none;
+  color: #ff9999;
+  background: rgba(163, 52, 43, 0.15);
+  border: 1px solid rgba(240, 195, 191, 0.25);
+  padding: 7px 16px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+
+  &:hover {
+    background: rgba(163, 52, 43, 0.35);
+    border-color: rgba(255, 105, 105, 0.5);
+    color: #ffffff;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(163, 52, 43, 0.25);
+  }
+
+  &:active {
+    transform: translateY(0) scale(0.97);
+  }
 }
 
-/* Formulario de nueva reserva: panel oscuro cristalino */
+
+/* ==========================================
+   FORMULARIO DE NUEVA RESERVA (TU BASE MEJORADA)
+========================================== */
+
 .reservas-form {
   position: relative;
   display: grid;
@@ -55,13 +141,13 @@
   gap: 20px;
   align-items: end;
 
-  padding: 26px;
+  padding: 28px;
   overflow: hidden;
 
   background:
     radial-gradient(
       ellipse at top right,
-      rgba(42, 126, 210, 0.16),
+      rgba(42, 126, 210, 0.18),
       transparent 55%
     ),
     linear-gradient(
@@ -111,8 +197,8 @@
   border-radius: 10px;
   outline: none;
 
- transition: border-color 0.22s ease, box-shadow 0.22s ease,
-            background-color 0.22s ease;
+  transition: border-color 0.22s ease, box-shadow 0.22s ease,
+              background-color 0.22s ease;
 }
 
 .reservas-form input::placeholder,
@@ -167,7 +253,23 @@
   font-size: 25px;
 }
 
-/* Animación discreta */
+.reservas-form .total-previo small {
+  color: #a9c7d8;
+  font-size: 12px;
+}
+
+/* Animaciones */
+@keyframes reservasAparecerGlobal {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @keyframes reservas-aparecer {
   from {
     opacity: 0;
@@ -189,20 +291,4 @@
   .reservas-form .mensaje {
     grid-column: auto;
   }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .reservas-form {
-    animation: none;
-    transition: none;
-  }
-}
-
-
-.reservas-form .mensaje { grid-column: 1 / -1; }
-
-/* Detalle pequeño dentro de la caja del total */
-.reservas-form .total-previo small {
-  color: #a9c7d8;
-  font-size: 12px;
 }
