@@ -32,3 +32,15 @@
 .resumen-dia #tarjetaCaja.caja-ok    { border-left-color: #2e8b57; }
 .resumen-dia #tarjetaCaja.caja-falta { border-left-color: #c0392b; }
 .resumen-dia #tarjetaCaja.caja-sobra { border-left-color: #d9822b; }
+
+.resumen-acciones { display: flex; gap: 10px; flex-wrap: wrap; }
+.resumen-acciones button {
+  padding: 10px 16px;
+  border: 1px solid #12845f;
+  background: #fff;
+  color: #12845f;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.resumen-acciones button:hover { background: #12845f; color: #fff; }
