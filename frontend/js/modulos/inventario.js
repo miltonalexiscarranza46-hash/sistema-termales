@@ -3,10 +3,8 @@
 (function () {
   const API = '/api/inventario';
 
-  // AJUSTAR: cómo guarda tu login el token (copiar de gastos.js)
   const token = () => localStorage.getItem('token');
 
-  // Solo para mostrar/ocultar el formulario. La seguridad real la hace el servidor.
   function rolActual() {
     try { return JSON.parse(atob(token().split('.')[1])).rol; } catch (e) { return null; }
   }
@@ -21,7 +19,6 @@
     return datos;
   }
 
-  // Crea elementos sin innerHTML (evita inyección de HTML)
   function h(tag, props = {}, ...hijos) {
     const el = document.createElement(tag);
     for (const [k, v] of Object.entries(props)) {
@@ -41,8 +38,8 @@
     area.classList.add('inv-modulo');
 
     const msg = h('p', { class: 'inv-msg' });
-    const cont = h('div', { class: 'inv-tabla' });
-    const selProd = h('select', { required: '' });
+    const cont = h('div', { class: 'inv-tabla-wrap' }); // Clase contenedora para la tabla estilo glass
+    const selProd = h('select', { class: 'inv-input', required: '' });
 
     function mostrar(texto, esError) {
       msg.textContent = texto;
@@ -51,32 +48,49 @@
 
     function pintarTabla() {
       const filas = productos.map((p) =>
-        h('tr', { class: p.stock_bajo ? 'inv-bajo' : '' },
+        h('tr', { class: p.bajo_stock ? 'inv-bajo' : '' },
           h('td', {}, p.nombre),
-          h('td', {}, Number(p.precio).toFixed(2)),
-          h('td', {}, String(p.stock)),
+          h('td', {}, '$' + Number(p.precio).toFixed(2)),
+          h('td', {}, String(p.existencias)),
           h('td', {}, String(p.stock_minimo)),
-          h('td', {}, p.stock_bajo ? h('span', { class: 'inv-badge' }, 'Stock bajo') : '')
+          h('td', {},
+            p.bajo_stock
+              ? h('span', { class: 'inv-badge' }, 'Stock bajo')
+              : ''
+          )
         )
       );
+
       cont.replaceChildren(
         h('table', { class: 'inv-table' },
-          h('thead', {}, h('tr', {},
-            ['Producto', 'Precio', 'Stock', 'Mínimo', 'Alerta'].map((t) => h('th', {}, t)))),
-          h('tbody', {}, filas.length ? filas : h('tr', {}, h('td', { colspan: '5' }, 'No hay productos.')))
+          h('thead', {},
+            h('tr', {},
+              ['Producto', 'Precio', 'Existencias', 'Stock mínimo', 'Alerta']
+                .map((t) => h('th', {}, t))
+            )
+          ),
+          h('tbody', {},
+            filas.length
+              ? filas
+              : h('tr', {},
+                  h('td', { colspan: '5' }, 'No hay productos.')
+                )
+          )
         )
       );
     }
 
     function llenarSelect() {
       selProd.replaceChildren(
-        ...productos.map((p) => h('option', { value: String(p.id) }, `${p.nombre} (stock ${p.stock})`))
+        ...productos.map((p) => h('option', { value: String(p.id) }, `${p.nombre} (stock: ${p.existencias ?? 0})`))
       );
     }
 
     async function refrescar() {
       try {
-        productos = await api('/productos');
+        const respuesta = await api('/productos');
+        productos = respuesta.productos || [];
+
         pintarTabla();
         llenarSelect();
       } catch (e) {
@@ -84,21 +98,24 @@
       }
     }
 
-    area.append(h('h2', {}, 'Inventario'), msg, cont);
+    area.append(h('h2', { class: 'inv-titulo' }, 'Inventario'), msg, cont);
 
     if (puedeEscribir) {
       // ── Formulario de movimiento ──
-      const selTipo = h('select', {},
+      const selTipo = h('select', { class: 'inv-input' },
         h('option', { value: 'entrada' }, 'Entrada'),
         h('option', { value: 'salida' }, 'Salida'),
         h('option', { value: 'ajuste' }, 'Ajuste (stock contado)'));
-      const inCant = h('input', { type: 'number', min: '0', step: '1', required: '', placeholder: 'Cantidad' });
-      const inMotivo = h('input', { type: 'text', placeholder: 'Motivo (obligatorio en salida y ajuste)' });
+      const inCant = h('input', { class: 'inv-input', type: 'number', min: '0', step: '1', required: '', placeholder: 'Cantidad' });
+      const inMotivo = h('input', { class: 'inv-input', type: 'text', placeholder: 'Motivo (obligatorio en salida y ajuste)' });
 
       const formMov = h('form', { class: 'inv-form' },
         h('h3', {}, 'Registrar movimiento'),
-        selProd, selTipo, inCant, inMotivo,
-        h('button', { type: 'submit' }, 'Guardar movimiento'));
+        h('div', { class: 'inv-grupo' }, h('label', {}, 'Producto'), selProd),
+        h('div', { class: 'inv-grupo' }, h('label', {}, 'Tipo de movimiento'), selTipo),
+        h('div', { class: 'inv-grupo' }, h('label', {}, 'Cantidad'), inCant),
+        h('div', { class: 'inv-grupo' }, h('label', {}, 'Motivo'), inMotivo),
+        h('button', { type: 'submit', class: 'inv-btn' }, 'Guardar movimiento'));
 
       formMov.addEventListener('submit', async (ev) => {
         ev.preventDefault();
@@ -121,15 +138,18 @@
       });
 
       // ── Formulario de producto nuevo ──
-      const inNombre = h('input', { type: 'text', required: '', placeholder: 'Nombre' });
-      const inPrecio = h('input', { type: 'number', min: '0', step: '0.01', required: '', placeholder: 'Precio' });
-      const inMin = h('input', { type: 'number', min: '0', step: '1', value: '0', placeholder: 'Stock mínimo' });
-      const inIni = h('input', { type: 'number', min: '0', step: '1', value: '0', placeholder: 'Stock inicial' });
+      const inNombre = h('input', { class: 'inv-input', type: 'text', required: '', placeholder: 'Nombre' });
+      const inPrecio = h('input', { class: 'inv-input', type: 'number', min: '0', step: '0.01', required: '', placeholder: 'Precio' });
+      const inMin = h('input', { class: 'inv-input', type: 'number', min: '0', step: '1', value: '0', placeholder: 'Stock mínimo' });
+      const inIni = h('input', { class: 'inv-input', type: 'number', min: '0', step: '1', value: '0', placeholder: 'Stock inicial' });
 
       const formProd = h('form', { class: 'inv-form' },
         h('h3', {}, 'Nuevo producto'),
-        inNombre, inPrecio, inMin, inIni,
-        h('button', { type: 'submit' }, 'Crear producto'));
+        h('div', { class: 'inv-grupo' }, h('label', {}, 'Nombre'), inNombre),
+        h('div', { class: 'inv-grupo' }, h('label', {}, 'Precio ($)'), inPrecio),
+        h('div', { class: 'inv-grupo' }, h('label', {}, 'Stock mínimo'), inMin),
+        h('div', { class: 'inv-grupo' }, h('label', {}, 'Stock inicial'), inIni),
+        h('button', { type: 'submit', class: 'inv-btn' }, 'Crear producto'));
 
       formProd.addEventListener('submit', async (ev) => {
         ev.preventDefault();
@@ -151,7 +171,8 @@
         }
       });
 
-      area.append(formMov, formProd);
+      const bloques = h('div', { class: 'inv-bloques' }, formMov, formProd);
+      area.append(bloques);
     }
 
     refrescar();

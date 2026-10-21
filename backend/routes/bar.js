@@ -1,19 +1,20 @@
-// backend/routes/bar.js
-const express = require('express');
-const router = express.Router();
-
-// AJUSTAR: copiar los require exactos que usa routes/gastos.js
+const router = require('express').Router();
 const { verificarToken, permitirRoles } = require('../middleware/auth');
-const ctrl = require('../controllers/barController');
+const c = require('../controllers/barController');
 
-// Todo el módulo es solo del mesero (el administrador no opera, solo ve resúmenes)
+// Solo el mesero opera; el administrador no entra a este módulo
 router.use(verificarToken, permitirRoles('mesero'));
 
-router.get('/pedidos', ctrl.listarPedidos);
-router.post('/pedidos', ctrl.abrirPedido);
-router.get('/pedidos/:id', ctrl.obtenerPedido);
-router.post('/pedidos/:id/items', ctrl.agregarItem);
-router.delete('/pedidos/:id/items/:itemId', ctrl.quitarItem);
-router.post('/pedidos/:id/cobrar', ctrl.cobrarPedido);
+router.get('/catalogos', c.catalogos);
+router.get('/productos', c.productos);
+router.get('/resumen', c.miResumen);
+
+router.get('/pedidos', c.listarPedidos);
+router.post('/pedidos', c.abrirPedido);
+router.get('/pedidos/:id', c.verPedido);
+router.post('/pedidos/:id/items', c.agregarItem);
+router.patch('/pedidos/:id/items/:productoId', c.cambiarCantidad);
+router.post('/pedidos/:id/cobrar', c.cobrar);
+router.post('/pedidos/:id/cancelar', c.cancelar);
 
 module.exports = router;
