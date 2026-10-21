@@ -5,7 +5,7 @@ const dinero = (n) => '$' + Number(n || 0).toFixed(2);
 
 const ROLES_REPORTAN = ['recepcionista', 'masajista', 'mesero', 'bodega', 'cajero'];
 // Roles que aún no tienen resumen automático (sus módulos están pendientes)
-const ROLES_SIN_RESUMEN = ['mesero', 'bodega'];
+const ROLES_SIN_RESUMEN = ['bodega'];
 
 const textoDif = (n) =>
   n === 0 ? 'cuadra' : n < 0 ? 'falta ' + dinero(-n) : 'sobra ' + dinero(n);
@@ -56,6 +56,41 @@ async function resumenDe(db, rol, usuarioId) {
       { etiqueta: 'Masajes cobrados', valor: String(c.rows[0].cantidad) },
       { etiqueta: 'Total cobrado', valor: dinero(c.rows[0].total) },
       { etiqueta: 'Citas aún agendadas hoy', valor: String(p.rows[0].cantidad) }
+    );
+  }
+  if (rol === 'mesero') {
+    const r = await db.query(
+      `SELECT
+         COUNT(*)::int AS cuentas,
+         COALESCE(SUM(total), 0) AS total
+       FROM pedidos
+       WHERE estado = 'cobrado'
+         AND cobrado_por = $1
+         AND fecha_pago::date = CURRENT_DATE`,
+      [usuarioId]
+    );
+
+    const p = await db.query(
+      `SELECT COUNT(*)::int AS cantidad
+       FROM pedidos
+       WHERE mesero_id = $1
+         AND estado = 'abierto'`,
+      [usuarioId]
+    );
+
+    items.push(
+      {
+        etiqueta: 'Cuentas cobradas hoy',
+        valor: String(r.rows[0].cuentas)
+      },
+      {
+        etiqueta: 'Total cobrado hoy',
+        valor: dinero(r.rows[0].total)
+      },
+      {
+        etiqueta: 'Pedidos abiertos',
+        valor: String(p.rows[0].cantidad)
+      }
     );
   }
 
