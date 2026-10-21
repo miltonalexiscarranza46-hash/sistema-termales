@@ -158,4 +158,5 @@ async function cargarResumen(area) {
 
   fecha.value = hoyLocal();
   await cargar();
+    agregarExportar(area);
 }
